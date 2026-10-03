@@ -70,7 +70,7 @@ export default function ChatScreen({ client, activeChat, onOpenChat, onCloseChat
               <div>
                 <h2>{activeChat.phone}</h2>
                 <p className={`transport-status ${status === 'issue' ? 'is-issue' : ''}`} role="status">
-                  {status === 'issue' ? 'Проблема с подключением. Проверяем снова…' : 'Подключено'}
+                  {status === 'issue' ? 'Проблема с подключением. Проверяем снова…' : status === 'checking' ? 'Проверяем подключение…' : 'Подключено'}
                 </p>
               </div>
               <button className="text-button" type="button" onClick={onCloseChat}>Закрыть чат</button>

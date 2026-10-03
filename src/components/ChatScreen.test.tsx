@@ -121,6 +121,57 @@ it('does not send whitespace and shows outgoing text only after API success', as
   )
 })
 
+it('preserves text typed during an in-flight send when that send succeeds', async () => {
+  let resolveSend!: (response: Response) => void
+  const fetchMock = vi.fn((url: string) => {
+    if (url.includes('/checkAccount/')) return Promise.resolve(accountSuccess())
+    if (url.includes('/sendMessage/')) return new Promise<Response>((resolve) => { resolveSend = resolve })
+    return Promise.resolve(new Response('null', { status: 200 }))
+  })
+  await openChat(fetchMock)
+  const composer = screen.getByRole('textbox', { name: 'Сообщение' })
+  fireEvent.change(composer, { target: { value: 'Первое' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+  fireEvent.change(composer, { target: { value: 'Следующее' } })
+
+  await act(async () => { resolveSend(new Response('{}', { status: 200 })) })
+
+  expect(screen.getByText('Первое', { selector: '.message-bubble p' })).toBeInTheDocument()
+  expect(composer).toHaveValue('Следующее')
+  expect(screen.getByRole('button', { name: 'Отправить' })).toBeEnabled()
+})
+
+it('preserves a retyped draft even when it matches the submitted text', async () => {
+  let resolveSend!: (response: Response) => void
+  const fetchMock = vi.fn((url: string) => {
+    if (url.includes('/checkAccount/')) return Promise.resolve(accountSuccess())
+    if (url.includes('/sendMessage/')) return new Promise<Response>((resolve) => { resolveSend = resolve })
+    return Promise.resolve(new Response('null', { status: 200 }))
+  })
+  await openChat(fetchMock)
+  const composer = screen.getByRole('textbox', { name: 'Сообщение' })
+  fireEvent.change(composer, { target: { value: 'Привет' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+  fireEvent.change(composer, { target: { value: '' } })
+  fireEvent.change(composer, { target: { value: 'Привет' } })
+
+  await act(async () => { resolveSend(new Response('{}', { status: 200 })) })
+
+  expect(composer).toHaveValue('Привет')
+})
+
+it('shows a neutral status before the first notification check succeeds', async () => {
+  const fetchMock = vi.fn((url: string) => {
+    if (url.includes('/checkAccount/')) return Promise.resolve(accountSuccess())
+    return Promise.resolve(new Response('null', { status: 200 }))
+  })
+  await openChat(fetchMock)
+
+  expect(screen.getByRole('status')).toHaveTextContent('Проверяем подключение…')
+  expect(screen.queryByText('Подключено')).not.toBeInTheDocument()
+  expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining('/receiveNotification/'), expect.anything())
+})
+
 it('keeps confirmed messages after a failed send and hides server details', async () => {
   let sends = 0
   const fetchMock = vi.fn((url: string) => {

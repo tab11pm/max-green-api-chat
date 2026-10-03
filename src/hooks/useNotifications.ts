@@ -11,9 +11,9 @@ interface UseNotificationsOptions {
 }
 
 export function useNotifications({ client, chatId, onMessage }: UseNotificationsOptions): {
-  status: 'online' | 'issue';
+  status: 'checking' | 'online' | 'issue';
 } {
-  const [status, setStatus] = useState<'online' | 'issue'>('online');
+  const [status, setStatus] = useState<'checking' | 'online' | 'issue'>('checking');
   const onMessageRef = useRef(onMessage);
   onMessageRef.current = onMessage;
 
