@@ -14,27 +14,32 @@ export interface ActiveChat {
 
 interface Props {
   client: GreenApiClient
-  activeChat: ActiveChat | null
-  initialMessages: TimelineMessage[]
-  onMessagesChange: (messages: TimelineMessage[]) => void
+  chats: Array<ActiveChat & { messages: TimelineMessage[] }>
+  activeChatId: string | null
+  onSelectChat: (chatId: string) => void
+  onMessagesChange: (chatId: string, messages: TimelineMessage[]) => void
   onOpenChat: (chat: ActiveChat) => void
   onCloseChat: () => void
   onDisconnect: () => void
 }
 
-export default function ChatScreen({ client, activeChat, initialMessages, onMessagesChange, onOpenChat, onCloseChat, onDisconnect }: Props): React.JSX.Element {
+export default function ChatScreen({ client, chats, activeChatId, onSelectChat, onMessagesChange, onOpenChat, onCloseChat, onDisconnect }: Props): React.JSX.Element {
+  const activeChat = chats.find((chat) => chat.chatId === activeChatId) ?? null
   const [dialogOpen, setDialogOpen] = useState(false)
   const newChatButton = useRef<HTMLButtonElement>(null)
-  const [messages, setMessages] = useState<TimelineMessage[]>(initialMessages)
-  const nextMessageId = useRef(0)
+  const [messages, setMessages] = useState<TimelineMessage[]>(activeChat?.messages ?? [])
+  const nextMessageId = useRef(chats.reduce((max, chat) => chat.messages.reduce((chatMax, message) => {
+    const id = Number(message.id)
+    return Number.isSafeInteger(id) && id >= 0 ? Math.max(chatMax, id) : chatMax
+  }, max), 0))
   const appendMessage = useCallback((message: Omit<TimelineMessage, 'id'>) => {
     const id = String(++nextMessageId.current)
     setMessages((previous) => {
       const next = [...previous, { ...message, id }]
-      onMessagesChange(next)
+      if (activeChat) onMessagesChange(activeChat.chatId, next)
       return next
     })
-  }, [onMessagesChange])
+  }, [activeChat, onMessagesChange])
   const onMessage = useCallback((message: IncomingMessage) => appendMessage(message), [appendMessage])
   const { status } = useNotifications({ client, chatId: activeChat?.chatId ?? null, phone: activeChat?.phone ?? null, onMessage })
 
@@ -61,11 +66,15 @@ export default function ChatScreen({ client, activeChat, initialMessages, onMess
           <ThemeToggle />
         </div>
         <button ref={newChatButton} className="primary-button new-chat-button" type="button" onClick={() => setDialogOpen(true)}><Icon name="plus" size={16} />Новый чат</button>
-        {activeChat ? (
-          <div className="chat-preview" aria-current="page">
-            <span className="avatar" aria-hidden="true"><Icon name="chat" /></span>
-            <span className="chat-preview-copy"><strong>{activeChat.phone}</strong><small>Текущий чат</small></span>
-          </div>
+        {chats.length ? (
+          <nav className="chat-list" aria-label="Сохранённые чаты">
+            {chats.map((chat) => (
+              <button key={chat.chatId} className="chat-preview" type="button" aria-label={chat.phone} aria-current={chat.chatId === activeChatId ? 'page' : undefined} onClick={() => onSelectChat(chat.chatId)}>
+                <span className="avatar" aria-hidden="true"><Icon name="chat" /></span>
+                <span className="chat-preview-copy"><strong>{chat.phone}</strong><small aria-hidden="true">{chat.chatId === activeChatId ? 'Текущий чат' : 'Сохранённый чат'}</small></span>
+              </button>
+            ))}
+          </nav>
         ) : <p className="sidebar-empty">Откройте чат по номеру телефона, чтобы начать переписку.</p>}
         <button className="disconnect-button" type="button" aria-label="Отключиться" onClick={onDisconnect}><Icon name="logout" size={16} /><span>Отключиться</span></button>
       </aside>

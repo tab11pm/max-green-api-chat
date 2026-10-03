@@ -48,6 +48,52 @@ it('renders a theme toggle in the sidebar', async () => {
   expect(screen.getByRole('button', { name: 'Переключить тему' })).toBeInTheDocument()
 })
 
+it('lists saved chats and restores the selected chat history', () => {
+  sessionStorage.setItem('green-api-chat-session', JSON.stringify({
+    credentials: { idInstance: '123', apiTokenInstance: 'test-token' },
+    chats: [
+      { chatId: 'chat-one', phone: '+7 (999) 123-45-67', messages: [{ id: '7', direction: 'outgoing', text: 'Сообщение первого чата', timestamp: 1_791_000_000 }] },
+      { chatId: 'chat-two', phone: '+7 (999) 765-43-21', messages: [{ id: '8', direction: 'incoming', text: 'Сообщение второго чата', timestamp: 1_791_000_001 }] },
+    ],
+    activeChatId: 'chat-two',
+  }))
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('null', { status: 200 })))
+  render(<App />)
+
+  const first = screen.getByRole('button', { name: '+7 (999) 123-45-67' })
+  const second = screen.getByRole('button', { name: '+7 (999) 765-43-21' })
+  expect(first).not.toHaveAttribute('aria-current')
+  expect(second).toHaveAttribute('aria-current', 'page')
+  expect(screen.getByText('Сообщение второго чата')).toBeInTheDocument()
+
+  fireEvent.click(first)
+  expect(screen.getByRole('button', { name: '+7 (999) 123-45-67' })).toHaveAttribute('aria-current', 'page')
+  expect(screen.getByRole('button', { name: '+7 (999) 765-43-21' })).not.toHaveAttribute('aria-current')
+  expect(screen.getByText('Сообщение первого чата')).toBeInTheDocument()
+  expect(screen.queryByText('Сообщение второго чата')).not.toBeInTheDocument()
+})
+
+it('assigns a new message ID above saved numeric IDs', async () => {
+  sessionStorage.setItem('green-api-chat-session', JSON.stringify({
+    credentials: { idInstance: '123', apiTokenInstance: 'test-token' },
+    chats: [
+      { chatId: 'chat-one', phone: '+7 (999) 123-45-67', messages: [{ id: '42', direction: 'incoming', text: 'Сохранённое', timestamp: 1_791_000_000 }] },
+      { chatId: 'chat-two', phone: '+7 (999) 765-43-21', messages: [] },
+    ],
+    activeChatId: 'chat-two',
+  }))
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 200 })))
+  render(<App />)
+
+  fireEvent.change(screen.getByRole('textbox', { name: 'Сообщение' }), { target: { value: 'Новое' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+  await screen.findByText('Новое')
+
+  const saved = JSON.parse(sessionStorage.getItem('green-api-chat-session')!)
+  expect(saved.chats[0].messages).toEqual([{ id: '42', direction: 'incoming', text: 'Сохранённое', timestamp: 1_791_000_000 }])
+  expect(saved.chats[1].messages[0]).toMatchObject({ id: '43', text: 'Новое' })
+})
+
 it('moves the theme toggle into the sidebar header and gives disconnect its own footer row', async () => {
   await openChat(vi.fn().mockResolvedValue(accountSuccess()))
   expect(document.querySelector('.sidebar-head .theme-toggle')).not.toBeNull()
