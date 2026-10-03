@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import App from '../App'
 
+beforeEach(() => sessionStorage.clear())
 afterEach(() => vi.restoreAllMocks())
 
-it('guides empty credentials and connects without browser storage', () => {
-  const localWrite = vi.spyOn(Storage.prototype, 'setItem')
-  const localRead = vi.spyOn(Storage.prototype, 'getItem')
+it('guides empty credentials and stores a session-only connection', () => {
+  const localWrite = vi.spyOn(localStorage, 'setItem')
   render(<App />)
 
   fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }))
@@ -23,6 +23,6 @@ it('guides empty credentials and connects without browser storage', () => {
 
   expect(screen.getByRole('heading', { name: 'Чаты' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Новый чат' })).toBeInTheDocument()
+  expect(sessionStorage.getItem('green-api-chat-session')).toContain('test-token')
   expect(localWrite).not.toHaveBeenCalled()
-  expect(localRead).not.toHaveBeenCalled()
 })

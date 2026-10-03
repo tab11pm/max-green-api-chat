@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import App from '../App'
 
 const accountSuccess = () => new Response(JSON.stringify({ existsWhatsapp: true, chatId: 'whatsapp-chat-42' }), { status: 200 })
@@ -28,10 +28,13 @@ async function openChat(fetchMock: ReturnType<typeof vi.fn>) {
 }
 
 afterEach(() => {
+  sessionStorage.clear()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
   vi.useRealTimers()
 })
+
+beforeEach(() => sessionStorage.clear())
 
 it('validates a recipient before sending an account request', () => {
   const fetchMock = vi.fn()
