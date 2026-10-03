@@ -26,3 +26,16 @@ it('guides empty credentials and stores a session-only connection', () => {
   expect(sessionStorage.getItem('green-api-chat-session')).toContain('test-token')
   expect(localWrite).not.toHaveBeenCalled()
 })
+
+it('shows the Kaitoma brand and MAX transport label', () => {
+  render(<App />)
+
+  expect(screen.getByText('Кайтома')).toBeInTheDocument()
+  expect(screen.getByText(/GREEN-API · MAX/)).toBeInTheDocument()
+})
+
+it('gives each credential field a leading icon', () => {
+  const { container } = render(<App />)
+
+  expect(container.querySelectorAll('.field-control svg')).toHaveLength(2)
+})
