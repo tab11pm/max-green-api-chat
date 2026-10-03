@@ -342,9 +342,10 @@ textarea {
 
 textarea {
   border-radius: var(--k-radius-composer);
-  resize: vertical;
+  resize: none;
   min-height: 3rem;
-  max-height: 12rem;
+  max-height: 160px;
+  overflow-y: auto;
 }
 
 input::placeholder,
