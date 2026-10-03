@@ -7,10 +7,11 @@ export type GreenApiClient = ReturnType<typeof createGreenApiClient>;
 interface UseNotificationsOptions {
   client: GreenApiClient | null;
   chatId: string | null;
+  phone?: string | null;
   onMessage: (message: IncomingMessage) => void;
 }
 
-export function useNotifications({ client, chatId, onMessage }: UseNotificationsOptions): {
+export function useNotifications({ client, chatId, phone, onMessage }: UseNotificationsOptions): {
   status: 'checking' | 'online' | 'issue';
 } {
   const [status, setStatus] = useState<'checking' | 'online' | 'issue'>('checking');
@@ -29,7 +30,7 @@ export function useNotifications({ client, chatId, onMessage }: UseNotifications
         const notification = await client.receiveNotification();
         if (notification) {
           try {
-            const message = parseIncomingText(notification, chatId);
+            const message = parseIncomingText(notification, chatId, phone ?? undefined);
             if (active && message) onMessageRef.current(message);
           } finally {
             await client.deleteNotification(notification.receiptId);
@@ -47,7 +48,7 @@ export function useNotifications({ client, chatId, onMessage }: UseNotifications
       active = false;
       clearInterval(timer);
     };
-  }, [client, chatId]);
+  }, [client, chatId, phone]);
 
   return { status };
 }

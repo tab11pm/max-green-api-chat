@@ -16,6 +16,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export function parseIncomingText(
   notification: unknown,
   activeChatId: string,
+  activePhone?: string,
 ): IncomingMessage | null {
   const payload = isRecord(notification) && 'body' in notification
     ? notification.body
@@ -25,10 +26,15 @@ export function parseIncomingText(
 
   const senderData = payload.senderData;
   const messageData = payload.messageData;
+  if (!isRecord(senderData)) return null;
+  const senderChatId = senderData.chatId;
+  const senderDigits = typeof senderChatId === 'string' ? senderChatId.replace(/\D/g, '') : '';
+  const activeDigits = activePhone?.replace(/\D/g, '') ?? '';
+  const belongsToActiveChat = senderChatId === activeChatId || (Boolean(activeDigits) && senderDigits === activeDigits);
+
   if (
     payload.typeWebhook !== 'incomingMessageReceived' ||
-    !isRecord(senderData) ||
-    senderData.chatId !== activeChatId ||
+    !belongsToActiveChat ||
     !isRecord(messageData) ||
     messageData.typeMessage !== 'textMessage'
   ) {

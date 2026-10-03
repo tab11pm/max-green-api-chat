@@ -27,7 +27,7 @@ export default function ChatScreen({ client, activeChat, onOpenChat, onCloseChat
     const id = String(++nextMessageId.current)
     setMessages((previous) => [...previous, { ...message, id }])
   }, [])
-  const { status } = useNotifications({ client, chatId: activeChat?.chatId ?? null, onMessage })
+  const { status } = useNotifications({ client, chatId: activeChat?.chatId ?? null, phone: activeChat?.phone ?? null, onMessage })
 
   async function send(text: string) {
     if (!activeChat) return

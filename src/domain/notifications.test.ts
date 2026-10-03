@@ -27,6 +27,14 @@ describe('parseIncomingText', () => {
     expect(parseIncomingText(textNotification, '375291234567@c.us')).toBeNull();
   });
 
+  it('matches an incoming WhatsApp message by the recipient phone when chat IDs differ', () => {
+    expect(parseIncomingText(textNotification, 'server-assigned-chat-id', '79991234567')).toEqual({
+      direction: 'incoming',
+      text: 'Привет',
+      timestamp: 1_791_000_000,
+    });
+  });
+
   it('ignores non-text notifications', () => {
     expect(
       parseIncomingText(
