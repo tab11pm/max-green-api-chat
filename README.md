@@ -24,17 +24,21 @@ To check the full flow, reply to the message from MAX and confirm the reply
 appears in the chat. Refreshing the page or selecting **Disconnect** returns
 to the connection screen; credentials and chat state are not restored.
 
+During `npm run dev`, GREEN-API requests use Vite's same-origin `/green-api`
+development proxy, which forwards them to `https://api.green-api.com`.
+
 ## Credential handling
 
 The instance ID and API token are held only in React memory. The app does not
 save them to browser storage or include them in application files, so they are
-cleared when the page is refreshed or disconnected. Since this is a direct
-browser integration, credentials are still used in requests from the browser
-and can be visible to someone with access to that browser's developer tools or
-network traffic. Use this integration only for local evaluation with an
-appropriate test instance. Do not publish or deploy it as a production client;
-a production application should send GREEN-API requests through a backend
-session proxy that keeps API credentials off the browser.
+cleared when the page is refreshed or disconnected. During local development,
+the browser sends requests to Vite's proxy; the credential-bearing request URL
+can still be visible to someone with access to the browser's developer tools
+or local network traffic. The Vite proxy applies only to `npm run dev` and is
+intended for local evaluation with an appropriate test instance. Production
+builds do not include this proxy. A production application should route
+GREEN-API requests through a backend session proxy that keeps API credentials
+off the browser.
 
 ## Checks
 

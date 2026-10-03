@@ -11,14 +11,14 @@ afterEach(() => {
 });
 
 describe('createGreenApiClient', () => {
-  it('sends text to the documented endpoint with the chat ID and message', async () => {
+  it('sends text through the same-origin GREEN-API proxy with the chat ID and message', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
     await createGreenApiClient(credentials).sendText('recipient-chat-id', 'Привет');
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.green-api.com/waInstanceinstance-placeholder/sendMessage/token-placeholder',
+      '/green-api/waInstanceinstance-placeholder/sendMessage/token-placeholder',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -38,7 +38,7 @@ describe('createGreenApiClient', () => {
 
     expect(chatId).toBe('10000000');
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.green-api.com/waInstanceinstance-placeholder/checkAccount/token-placeholder',
+      '/green-api/waInstanceinstance-placeholder/checkAccount/token-placeholder',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,7 +75,7 @@ describe('createGreenApiClient', () => {
     await expect(createGreenApiClient(credentials).receiveNotification())
       .resolves.toEqual(notification);
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.green-api.com/waInstanceinstance-placeholder/receiveNotification/token-placeholder',
+      '/green-api/waInstanceinstance-placeholder/receiveNotification/token-placeholder',
       { method: 'GET' },
     );
   });
@@ -104,7 +104,7 @@ describe('createGreenApiClient', () => {
     await createGreenApiClient(credentials).deleteNotification(42);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.green-api.com/waInstanceinstance-placeholder/deleteNotification/token-placeholder/42',
+      '/green-api/waInstanceinstance-placeholder/deleteNotification/token-placeholder/42',
       { method: 'DELETE' },
     );
   });

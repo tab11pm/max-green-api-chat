@@ -5,11 +5,11 @@ export interface ConnectionCredentials {
   apiTokenInstance: string;
 }
 
-const API_BASE_URL = 'https://api.green-api.com';
+const API_BASE_PATH = '/green-api';
 
 export function createGreenApiClient(credentials: ConnectionCredentials) {
   const endpoint = (operation: string) =>
-    `${API_BASE_URL}/waInstance${credentials.idInstance}/${operation}/${credentials.apiTokenInstance}`;
+    `${API_BASE_PATH}/waInstance${credentials.idInstance}/${operation}/${credentials.apiTokenInstance}`;
 
   async function request(operation: string, options: RequestInit, receiptId?: number): Promise<Response> {
     let response: Response;
