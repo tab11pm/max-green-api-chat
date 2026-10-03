@@ -48,6 +48,21 @@ it('renders a theme toggle in the sidebar', async () => {
   expect(screen.getByRole('button', { name: 'Переключить тему' })).toBeInTheDocument()
 })
 
+it('shows the outgoing timestamp and delivery icon', async () => {
+  const fetchMock = vi.fn((url: string) => {
+    if (url.includes('/checkWhatsapp/')) return Promise.resolve(accountSuccess())
+    if (url.includes('/sendMessage/')) return Promise.resolve(new Response(JSON.stringify({ idMessage: 'm1' }), { status: 200 }))
+    return Promise.resolve(new Response('{}', { status: 200 }))
+  })
+  await openChat(fetchMock)
+
+  fireEvent.change(screen.getByRole('textbox', { name: 'Сообщение' }), { target: { value: 'Привет' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+
+  expect(await screen.findByText(/\d{2}:\d{2}/)).toBeInTheDocument()
+  expect(document.querySelector('.bubble-out .meta svg')).not.toBeNull()
+})
+
 it('validates a recipient before sending an account request', () => {
   const fetchMock = vi.fn()
   vi.stubGlobal('fetch', fetchMock)
