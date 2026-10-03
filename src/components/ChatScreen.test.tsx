@@ -94,6 +94,33 @@ it('assigns a new message ID above saved numeric IDs', async () => {
   expect(saved.chats[1].messages[0]).toMatchObject({ id: '43', text: 'Новое' })
 })
 
+it('keeps a sent message when its send completes after switching chats', async () => {
+  let resolveSend!: (response: Response) => void
+  sessionStorage.setItem('green-api-chat-session', JSON.stringify({
+    credentials: { idInstance: '123', apiTokenInstance: 'test-token' },
+    chats: [
+      { chatId: 'chat-one', phone: '+7 (999) 123-45-67', messages: [] },
+      { chatId: 'chat-two', phone: '+7 (999) 765-43-21', messages: [] },
+    ],
+    activeChatId: 'chat-one',
+  }))
+  vi.stubGlobal('fetch', vi.fn((url: string) => url.includes('/sendMessage/')
+    ? new Promise<Response>((resolve) => { resolveSend = resolve })
+    : Promise.resolve(new Response('null', { status: 200 }))))
+  render(<App />)
+
+  fireEvent.change(screen.getByRole('textbox', { name: 'Сообщение' }), { target: { value: 'Отложенная отправка' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+  fireEvent.click(screen.getByRole('button', { name: '+7 (999) 765-43-21' }))
+  await act(async () => { resolveSend(new Response('{}', { status: 200 })) })
+  expect(screen.getByRole('button', { name: '+7 (999) 765-43-21' })).toHaveAttribute('aria-current', 'page')
+  expect(JSON.parse(sessionStorage.getItem('green-api-chat-session')!).activeChatId).toBe('chat-two')
+  fireEvent.click(screen.getByRole('button', { name: '+7 (999) 123-45-67' }))
+
+  expect(screen.getByText('Отложенная отправка')).toBeInTheDocument()
+  expect(JSON.parse(sessionStorage.getItem('green-api-chat-session')!).activeChatId).toBe('chat-one')
+})
+
 it('moves the theme toggle into the sidebar header and gives disconnect its own footer row', async () => {
   await openChat(vi.fn().mockResolvedValue(accountSuccess()))
   expect(document.querySelector('.sidebar-head .theme-toggle')).not.toBeNull()

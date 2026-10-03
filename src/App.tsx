@@ -64,7 +64,9 @@ export default function App(): React.JSX.Element {
   const selectedChat = activeSession.chats.find((chat) => chat.chatId === activeSession.activeChatId) ?? null
 
   return <ChatScreen key={selectedChat?.chatId ?? 'empty'} client={client} chats={activeSession.chats} activeChatId={activeSession.activeChatId} onSelectChat={(chatId) => saveSession({ ...activeSession, activeChatId: chatId })} onMessagesChange={(chatId, messages) => {
-    saveSession({ ...activeSession, chats: activeSession.chats.map((chat) => chat.chatId === chatId ? { ...chat, messages } : chat) })
+    const latestSession = readSession()
+    if (!latestSession || latestSession.credentials.idInstance !== activeSession.credentials.idInstance || latestSession.credentials.apiTokenInstance !== activeSession.credentials.apiTokenInstance) return
+    saveSession({ ...latestSession, chats: latestSession.chats.map((chat) => chat.chatId === chatId ? { ...chat, messages } : chat) })
   }} onOpenChat={(activeChat) => saveSession({
     ...activeSession,
     chats: activeSession.chats.some((chat) => chat.chatId === activeChat.chatId) ? activeSession.chats : [...activeSession.chats, { ...activeChat, messages: [] }],

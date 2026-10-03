@@ -28,17 +28,17 @@ export default function ChatScreen({ client, chats, activeChatId, onSelectChat, 
   const [dialogOpen, setDialogOpen] = useState(false)
   const newChatButton = useRef<HTMLButtonElement>(null)
   const [messages, setMessages] = useState<TimelineMessage[]>(activeChat?.messages ?? [])
+  const messagesRef = useRef(messages)
   const nextMessageId = useRef(chats.reduce((max, chat) => chat.messages.reduce((chatMax, message) => {
     const id = Number(message.id)
     return Number.isSafeInteger(id) && id >= 0 ? Math.max(chatMax, id) : chatMax
   }, max), 0))
   const appendMessage = useCallback((message: Omit<TimelineMessage, 'id'>) => {
     const id = String(++nextMessageId.current)
-    setMessages((previous) => {
-      const next = [...previous, { ...message, id }]
-      if (activeChat) onMessagesChange(activeChat.chatId, next)
-      return next
-    })
+    const next = [...messagesRef.current, { ...message, id }]
+    messagesRef.current = next
+    if (activeChat) onMessagesChange(activeChat.chatId, next)
+    setMessages(next)
   }, [activeChat, onMessagesChange])
   const onMessage = useCallback((message: IncomingMessage) => appendMessage(message), [appendMessage])
   const { status } = useNotifications({ client, chatId: activeChat?.chatId ?? null, phone: activeChat?.phone ?? null, onMessage })
