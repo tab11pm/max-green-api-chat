@@ -9,6 +9,7 @@ Use Node.js 22.12 or newer in the 22.x line, Node.js 24.x, or Node.js 26+.
 
 ```sh
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
@@ -25,7 +26,11 @@ appears in the chat. Refreshing the page or selecting **Disconnect** returns
 to the connection screen; credentials and chat state are not restored.
 
 During `npm run dev`, GREEN-API requests use Vite's same-origin `/green-api`
-development proxy, which forwards them to `https://api.green-api.com`.
+development proxy. Set `GREEN_API_URL` in `.env.local` to the `apiUrl` shown
+in the GREEN-API instance card, for example `https://7107.api.greenapi.com`.
+Restart `npm run dev` after changing this file. The repository includes only
+`.env.example`; `.env.local` is ignored by Git. Do not store `idInstance` or
+`apiTokenInstance` in any `.env` file.
 
 ## Credential handling
 

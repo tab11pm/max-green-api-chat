@@ -15,7 +15,10 @@ export default function NewChatDialog({ client, onClose, onOpenChat }: Props): R
   const [checking, setChecking] = useState(false)
   const cancelled = useRef(false)
   const dialog = useRef<HTMLElement>(null)
-  useEffect(() => () => { cancelled.current = true }, [])
+  useEffect(() => {
+    cancelled.current = false
+    return () => { cancelled.current = true }
+  }, [])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

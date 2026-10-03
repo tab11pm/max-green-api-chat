@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import App from '../App'
@@ -93,6 +94,20 @@ it('keeps the dialog open when a number has no MAX account', async () => {
 
   expect(await screen.findByText('Этот номер не зарегистрирован в MAX. Проверьте номер и попробуйте снова.')).toBeInTheDocument()
   expect(screen.getByRole('dialog')).toBeInTheDocument()
+})
+
+it('shows an account-check failure and restores the submit control in Strict Mode', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('Forbidden', { status: 403 })))
+  render(<StrictMode><App /></StrictMode>)
+  fireEvent.change(screen.getByRole('textbox', { name: 'ID экземпляра' }), { target: { value: '123' } })
+  fireEvent.change(screen.getByLabelText('Токен API'), { target: { value: 'test-token' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }))
+  openDialog()
+  fireEvent.change(screen.getByRole('textbox', { name: 'Номер получателя' }), { target: { value: '+7 999 123 45 67' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Открыть чат' }))
+
+  expect(await screen.findByText('Не удалось проверить номер. Проверьте подключение и попробуйте снова.')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Открыть чат' })).toBeEnabled()
 })
 
 it('does not send whitespace and shows outgoing text only after API success', async () => {
