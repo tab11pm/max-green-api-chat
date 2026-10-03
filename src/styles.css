@@ -170,7 +170,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   background: var(--k-surface);
   font-size: 15px;
 }
-.secondary-button:hover:not(:disabled) { border-color: var(--k-accent); color: var(--k-accent); }
+.secondary-button:hover:not(:disabled) { background: var(--k-surface-2); }
 
 .text-button {
   display: inline-flex;
@@ -195,7 +195,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   color: var(--k-muted);
   background: var(--k-surface);
 }
-.icon-button:hover:not(:disabled) { color: var(--k-accent); border-color: var(--k-accent); }
+.icon-button:hover:not(:disabled) { background: var(--k-surface-2); }
 
 .icon-button.primary-button {
   width: 46px;
@@ -467,7 +467,7 @@ input[aria-invalid="true"] { border-color: var(--k-error); }
   font-weight: 600;
   text-align: left;
 }
-.disconnect-button:hover { color: var(--k-error); }
+.disconnect-button:hover { background: var(--k-surface-2); }
 
 /* ---------- Chat surface ---------- */
 .chat-surface {
