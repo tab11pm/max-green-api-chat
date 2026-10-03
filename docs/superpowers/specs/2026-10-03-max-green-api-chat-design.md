@@ -28,7 +28,8 @@ contacts, attachments, or account management.
 1. On the connection screen, the user enters `idInstance` and
    `apiTokenInstance` and selects **Continue**.
 2. In the chat screen, the user selects **New chat**, enters a recipient
-   phone number in international format, and opens the chat.
+   phone number in international format, and opens the chat. The app verifies
+   the number with `CheckAccount` and uses the returned MAX `chatId`.
 3. The user enters non-blank text and sends it. It is added to the timeline
    only after GREEN-API confirms the send.
 4. The app polls for incoming notifications while the chat is open. Incoming
@@ -58,9 +59,11 @@ and phone conversion are independent of React for straightforward tests.
 
 - Sending calls `POST /waInstance{idInstance}/sendMessage/{apiTokenInstance}`
   with `{ chatId, message }`.
-- `chatId` is derived from the phone number by retaining digits and appending
-  the MAX user suffix expected by GREEN-API. The suffix is defined in one
-  constant so it can be adjusted if the service contract changes.
+- Creating a chat calls `POST /waInstance{idInstance}/checkAccount/{apiTokenInstance}`
+  with the normalized international `phoneNumber`. The returned `chatId` is
+  retained only for the active in-memory chat. This is required for reliable
+  incoming-message matching; phone-number `@c.us` identifiers are only a
+  backwards-compatible alternative.
 - Polling calls `GET /waInstance{idInstance}/receiveNotification/{apiTokenInstance}`
   at a restrained fixed interval. A `null` response means there is no event.
 - A supported `incomingMessageReceived` text event is normalized into an
@@ -72,8 +75,9 @@ and phone conversion are independent of React for straightforward tests.
 ## States and error handling
 
 - The connection form requires both values before continuation.
-- The new-chat form accepts only a phone number that normalizes to at least
-  seven digits. Its display form and request form are kept separate.
+- The new-chat form accepts an 11-digit Russian (`7`) or 12-digit Belarusian
+  (`375`) international number. A non-MAX number produces clear guidance and
+  does not open a chat.
 - The composer disables sending blank or in-flight messages.
 - An API failure leaves existing messages unchanged, shows a compact,
   actionable status message, and returns controls to an enabled state.
