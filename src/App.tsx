@@ -6,10 +6,14 @@ import type { TimelineMessage } from './components/MessageTimeline'
 
 const SESSION_KEY = 'green-api-chat-session'
 
+export interface SavedChat extends ActiveChat {
+  messages: TimelineMessage[]
+}
+
 interface ChatSession {
   credentials: ConnectionCredentials
-  activeChat: ActiveChat | null
-  messages: TimelineMessage[]
+  chats: SavedChat[]
+  activeChatId: string | null
 }
 
 function readSession(): ChatSession | null {
@@ -23,7 +27,21 @@ function readSession(): ChatSession | null {
       'idInstance' in session.credentials && typeof session.credentials.idInstance === 'string' &&
       'apiTokenInstance' in session.credentials && typeof session.credentials.apiTokenInstance === 'string'
     ) {
-      return session as ChatSession
+      if ('chats' in session && Array.isArray(session.chats)) {
+        return {
+          credentials: session.credentials as ConnectionCredentials,
+          chats: session.chats as SavedChat[],
+          activeChatId: 'activeChatId' in session && typeof session.activeChatId === 'string' ? session.activeChatId : null,
+        }
+      }
+      if ('activeChat' in session) {
+        const activeChat = session.activeChat as ActiveChat | null
+        return {
+          credentials: session.credentials as ConnectionCredentials,
+          chats: activeChat ? [{ ...activeChat, messages: 'messages' in session && Array.isArray(session.messages) ? session.messages as TimelineMessage[] : [] }] : [],
+          activeChatId: activeChat?.chatId ?? null,
+        }
+      }
     }
   } catch {
     // A malformed session is discarded instead of blocking the connection screen.
@@ -41,10 +59,18 @@ export default function App(): React.JSX.Element {
     setSession(nextSession)
   }
 
-  if (!session || !client) return <ConnectionScreen onConnect={(credentials) => saveSession({ credentials, activeChat: null, messages: [] })} />
+  if (!session || !client) return <ConnectionScreen onConnect={(credentials) => saveSession({ credentials, chats: [], activeChatId: null })} />
   const activeSession = session
+  const selectedChat = activeSession.chats.find((chat) => chat.chatId === activeSession.activeChatId) ?? null
 
-  return <ChatScreen key={activeSession.activeChat?.chatId ?? 'empty'} client={client} activeChat={activeSession.activeChat} initialMessages={activeSession.messages ?? []} onMessagesChange={(messages) => saveSession({ ...activeSession, messages })} onOpenChat={(activeChat) => saveSession({ ...activeSession, activeChat, messages: [] })} onCloseChat={() => saveSession({ ...activeSession, activeChat: null })} onDisconnect={() => {
+  return <ChatScreen key={selectedChat?.chatId ?? 'empty'} client={client} activeChat={selectedChat} initialMessages={selectedChat?.messages ?? []} onMessagesChange={(messages) => {
+    if (!selectedChat) return
+    saveSession({ ...activeSession, chats: activeSession.chats.map((chat) => chat.chatId === selectedChat.chatId ? { ...chat, messages } : chat) })
+  }} onOpenChat={(activeChat) => saveSession({
+    ...activeSession,
+    chats: activeSession.chats.some((chat) => chat.chatId === activeChat.chatId) ? activeSession.chats : [...activeSession.chats, { ...activeChat, messages: [] }],
+    activeChatId: activeChat.chatId,
+  })} onCloseChat={() => saveSession({ ...activeSession, activeChatId: null })} onDisconnect={() => {
     sessionStorage.removeItem(SESSION_KEY)
     setSession(null)
   }} />
