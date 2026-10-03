@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { act, fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitForElementToBeRemoved, within } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import App from '../App'
 
@@ -64,13 +64,28 @@ it('lists saved chats and restores the selected chat history', () => {
   const second = screen.getByRole('button', { name: '+7 (999) 765-43-21' })
   expect(first).not.toHaveAttribute('aria-current')
   expect(second).toHaveAttribute('aria-current', 'page')
-  expect(screen.getByText('Сообщение второго чата')).toBeInTheDocument()
+  expect(within(first).getByText('Сообщение первого чата')).toBeInTheDocument()
+  expect(within(second).getByText('Сообщение второго чата')).toBeInTheDocument()
+  expect(screen.getByText('Сообщение второго чата', { selector: '.message-bubble p' })).toBeInTheDocument()
 
   fireEvent.click(first)
   expect(screen.getByRole('button', { name: '+7 (999) 123-45-67' })).toHaveAttribute('aria-current', 'page')
   expect(screen.getByRole('button', { name: '+7 (999) 765-43-21' })).not.toHaveAttribute('aria-current')
-  expect(screen.getByText('Сообщение первого чата')).toBeInTheDocument()
-  expect(screen.queryByText('Сообщение второго чата')).not.toBeInTheDocument()
+  expect(screen.getByText('Сообщение первого чата', { selector: '.message-bubble p' })).toBeInTheDocument()
+  expect(screen.queryByText('Сообщение второго чата', { selector: '.message-bubble p' })).not.toBeInTheDocument()
+})
+
+it('does not render sidebar preview text for a chat without messages', () => {
+  sessionStorage.setItem('green-api-chat-session', JSON.stringify({
+    credentials: { idInstance: '123', apiTokenInstance: 'test-token' },
+    chats: [{ chatId: 'empty-chat', phone: '+7 (999) 000-00-00', messages: [] }],
+    activeChatId: 'empty-chat',
+  }))
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('null', { status: 200 })))
+  render(<App />)
+
+  const preview = screen.getByRole('button', { name: '+7 (999) 000-00-00' })
+  expect(preview.querySelector('small')).toBeNull()
 })
 
 it('assigns a new message ID above saved numeric IDs', async () => {
@@ -87,7 +102,7 @@ it('assigns a new message ID above saved numeric IDs', async () => {
 
   fireEvent.change(screen.getByRole('textbox', { name: 'Сообщение' }), { target: { value: 'Новое' } })
   fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
-  await screen.findByText('Новое')
+  await screen.findByText('Новое', { selector: '.message-bubble p' })
 
   const saved = JSON.parse(sessionStorage.getItem('green-api-chat-session')!)
   expect(saved.chats[0].messages).toEqual([{ id: '42', direction: 'incoming', text: 'Сохранённое', timestamp: 1_791_000_000 }])
@@ -117,7 +132,7 @@ it('keeps a sent message when its send completes after switching chats', async (
   expect(JSON.parse(sessionStorage.getItem('green-api-chat-session')!).activeChatId).toBe('chat-two')
   fireEvent.click(screen.getByRole('button', { name: '+7 (999) 123-45-67' }))
 
-  expect(screen.getByText('Отложенная отправка')).toBeInTheDocument()
+  expect(screen.getByText('Отложенная отправка', { selector: '.message-bubble p' })).toBeInTheDocument()
   expect(JSON.parse(sessionStorage.getItem('green-api-chat-session')!).activeChatId).toBe('chat-one')
 })
 
@@ -147,11 +162,11 @@ it('preserves newer messages when an earlier send completes after leaving and re
   fireEvent.click(screen.getByRole('button', { name: '+7 (999) 123-45-67' }))
   fireEvent.change(screen.getByRole('textbox', { name: 'Сообщение' }), { target: { value: 'Второе' } })
   fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
-  await screen.findByText('Второе')
+  await screen.findByText('Второе', { selector: '.message-bubble p' })
 
   await act(async () => { resolveFirstSend(new Response('{}', { status: 200 })) })
-  expect(screen.getByText('Первое')).toBeInTheDocument()
-  expect(screen.getByText('Второе')).toBeInTheDocument()
+  expect(screen.getByText('Первое', { selector: '.message-bubble p' })).toBeInTheDocument()
+  expect(screen.getByText('Второе', { selector: '.message-bubble p' })).toBeInTheDocument()
   const messages = JSON.parse(sessionStorage.getItem('green-api-chat-session')!).chats[0].messages
   expect(messages.map((message: { text: string }) => message.text)).toEqual(['Второе', 'Первое'])
   expect(new Set(messages.map((message: { id: string }) => message.id)).size).toBe(2)
@@ -212,7 +227,7 @@ it.each([
   fireEvent.click(screen.getByRole('button', { name: 'Открыть чат' }))
 
   await act(async () => { resolveSend(new Response('{}', { status: 200 })) })
-  expect(screen.getByText('Сообщение A')).toBeInTheDocument()
+  expect(screen.getByText('Сообщение A', { selector: '.message-bubble p' })).toBeInTheDocument()
   await act(async () => { resolveCheck(new Response(JSON.stringify({ existsWhatsapp: true, chatId: targetChatId }), { status: 200 })) })
 
   expect(screen.getByRole('heading', { name: targetPhone })).toBeInTheDocument()
@@ -364,7 +379,7 @@ it('does not send whitespace and shows outgoing text only after API success', as
   expect(screen.getByText('Отправка…')).toBeInTheDocument()
 
   await act(async () => { resolveSend(new Response('{}', { status: 200 })) })
-  expect(screen.getByText('Привет')).toBeInTheDocument()
+  expect(screen.getByText('Привет', { selector: '.message-bubble p' })).toBeInTheDocument()
   expect(fetchMock).toHaveBeenCalledWith(
     expect.stringContaining('/sendMessage/'),
       expect.objectContaining({ body: JSON.stringify({ chatId: 'whatsapp-chat-42', message: 'Привет' }) }),
@@ -436,12 +451,12 @@ it('keeps confirmed messages after a failed send and hides server details', asyn
   const composer = screen.getByRole('textbox', { name: 'Сообщение' })
   fireEvent.change(composer, { target: { value: 'Первое' } })
   fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
-  await screen.findByText('Первое')
+  await screen.findByText('Первое', { selector: '.message-bubble p' })
   fireEvent.change(composer, { target: { value: 'Второе' } })
   fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
 
   expect(await screen.findByText('Не удалось отправить сообщение. Попробуйте снова.')).toBeInTheDocument()
-  expect(screen.getByText('Первое')).toBeInTheDocument()
+  expect(screen.getByText('Первое', { selector: '.message-bubble p' })).toBeInTheDocument()
   expect(screen.queryByText('Второе', { selector: '.message-bubble p' })).not.toBeInTheDocument()
   expect(screen.getByRole('textbox', { name: 'Сообщение' })).toHaveValue('Второе')
   expect(screen.queryByText(/test-token|private/)).not.toBeInTheDocument()
@@ -464,7 +479,7 @@ it('shows matching incoming text from polling', async () => {
   })
   await openChat(fetchMock)
   await act(async () => { await new Promise((resolve) => setTimeout(resolve, 2_100)) })
-  expect(screen.getByText('Ответ')).toBeInTheDocument()
+  expect(screen.getByText('Ответ', { selector: '.message-bubble p' })).toBeInTheDocument()
   expect(screen.getByText('Входящее сообщение')).toBeInTheDocument()
 })
 

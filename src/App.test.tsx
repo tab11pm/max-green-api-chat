@@ -38,7 +38,7 @@ test('restores saved chats and their messages after a page reload', () => {
 
   render(<App />)
 
-  expect(screen.getByText('Сохранённый ответ')).toBeInTheDocument()
+  expect(screen.getByText('Сохранённый ответ', { selector: '.message-bubble p' })).toBeInTheDocument()
 })
 
 test('restores selected chat history and keeps every saved chat when closing', () => {
@@ -54,7 +54,7 @@ test('restores selected chat history and keeps every saved chat when closing', (
   render(<App />)
 
   expect(screen.getByRole('heading', { name: '+7 999 222-22-22' })).toBeInTheDocument()
-  expect(screen.getByText('Второй чат')).toBeInTheDocument()
+  expect(screen.getByText('Второй чат', { selector: '.message-bubble p' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Закрыть чат' }))
   expect(JSON.parse(sessionStorage.getItem('green-api-chat-session') ?? '{}')).toMatchObject({
     activeChatId: null,
@@ -73,7 +73,7 @@ test('migrates a legacy chat with its messages when the session changes', () => 
   }))
 
   render(<App />)
-  expect(screen.getByText('Старый ответ')).toBeInTheDocument()
+  expect(screen.getByText('Старый ответ', { selector: '.message-bubble p' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Закрыть чат' }))
 
   expect(JSON.parse(sessionStorage.getItem('green-api-chat-session') ?? '{}')).toMatchObject({
@@ -95,7 +95,8 @@ test('reopening a saved chat selects its existing history without duplicating it
   fireEvent.change(screen.getByRole('textbox', { name: 'Номер получателя' }), { target: { value: '+7 999 123-45-67' } })
   fireEvent.click(screen.getByRole('button', { name: 'Открыть чат' }))
 
-  expect(await screen.findByText('Сохранено')).toBeInTheDocument()
+  await screen.findByRole('heading', { name: '+7 999 123-45-67' })
+  expect(screen.getByText('Сохранено', { selector: '.message-bubble p' })).toBeInTheDocument()
   expect(JSON.parse(sessionStorage.getItem('green-api-chat-session') ?? '{}')).toMatchObject({
     activeChatId: 'saved',
     chats: [{ chatId: 'saved', messages: [{ text: 'Сохранено' }] }],

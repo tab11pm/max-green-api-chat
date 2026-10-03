@@ -458,6 +458,9 @@ input[aria-invalid="true"] { border-color: var(--k-error); }
   font-size: var(--k-text-label);
 }
 .chat-preview-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--k-muted);
   font-size: var(--k-text-caption);
 }

@@ -58,12 +58,18 @@ export default function ChatScreen({ client, chats, activeChatId, onSelectChat, 
         <button ref={newChatButton} className="primary-button new-chat-button" type="button" onClick={() => setDialogOpen(true)}><Icon name="plus" size={16} />Новый чат</button>
         {chats.length ? (
           <nav className="chat-list" aria-label="Сохранённые чаты">
-            {chats.map((chat) => (
-              <button key={chat.chatId} className="chat-preview" type="button" aria-label={chat.phone} aria-current={chat.chatId === activeChatId ? 'page' : undefined} onClick={() => onSelectChat(chat.chatId)}>
-                <span className="avatar" aria-hidden="true"><Icon name="chat" /></span>
-                <span className="chat-preview-copy"><strong>{chat.phone}</strong><small aria-hidden="true">{chat.chatId === activeChatId ? 'Текущий чат' : 'Сохранённый чат'}</small></span>
-              </button>
-            ))}
+            {chats.map((chat) => {
+              const lastMessage = chat.messages.at(-1)
+              return (
+                <button key={chat.chatId} className="chat-preview" type="button" aria-label={chat.phone} aria-current={chat.chatId === activeChatId ? 'page' : undefined} onClick={() => onSelectChat(chat.chatId)}>
+                  <span className="avatar" aria-hidden="true"><Icon name="chat" /></span>
+                  <span className="chat-preview-copy">
+                    <strong>{chat.phone}</strong>
+                    {lastMessage ? <small>{lastMessage.text}</small> : null}
+                  </span>
+                </button>
+              )
+            })}
           </nav>
         ) : <p className="sidebar-empty">Откройте чат по номеру телефона, чтобы начать переписку.</p>}
         <button className="disconnect-button" type="button" aria-label="Отключиться" onClick={onDisconnect}><Icon name="logout" size={16} /><span>Отключиться</span></button>
