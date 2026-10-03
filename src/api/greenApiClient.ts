@@ -37,22 +37,22 @@ export function createGreenApiClient(credentials: ConnectionCredentials) {
   }
 
   return {
-    async checkAccount(phoneNumber: string): Promise<string | null> {
-      const response = await request('checkAccount', {
+    async checkWhatsapp(phoneNumber: string): Promise<string | null> {
+      const response = await request('checkWhatsapp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phoneNumber: Number(phoneNumber) }),
       });
-      const result = await readJson('checkAccount', response);
+      const result = await readJson('checkWhatsapp', response);
       if (
         typeof result === 'object' && result !== null &&
-        'exist' in result &&
+        'existsWhatsapp' in result &&
         'chatId' in result && typeof result.chatId === 'string'
       ) {
-        if (result.exist === false) return null;
-        if (result.exist === true && result.chatId) return result.chatId;
+        if (result.existsWhatsapp === false) return null;
+        if (result.existsWhatsapp === true && result.chatId) return result.chatId;
       }
-      throw new Error('checkAccount failed (invalid response)');
+      throw new Error('checkWhatsapp failed (invalid response)');
     },
 
     async sendText(chatId: string, text: string): Promise<void> {

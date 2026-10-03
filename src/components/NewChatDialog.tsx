@@ -31,10 +31,10 @@ export default function NewChatDialog({ client, onClose, onOpenChat }: Props): R
     setError('')
     setChecking(true)
     try {
-      const chatId = await client.checkAccount(normalized)
+      const chatId = await client.checkWhatsapp(normalized)
       if (cancelled.current) return
       if (chatId) onOpenChat({ chatId, phone: phone.trim() })
-      else setError('Этот номер не зарегистрирован в MAX. Проверьте номер и попробуйте снова.')
+      else setError('Этот номер не зарегистрирован в WhatsApp. Проверьте номер и попробуйте снова.')
     } catch {
       if (!cancelled.current) setError('Не удалось проверить номер. Проверьте подключение и попробуйте снова.')
     } finally {
@@ -67,7 +67,7 @@ export default function NewChatDialog({ client, onClose, onOpenChat }: Props): R
       }}>
         <button className="dialog-close" type="button" aria-label="Закрыть окно" onClick={close}>×</button>
         <h2 id="new-chat-title">Новый чат</h2>
-        <p>Введите номер человека, с которым хотите переписываться в MAX.</p>
+        <p>Введите номер человека, с которым хотите переписываться в WhatsApp.</p>
         <form onSubmit={submit} noValidate>
           <label htmlFor="recipient-phone">Номер получателя</label>
           <input id="recipient-phone" type="tel" inputMode="tel" autoComplete="off" autoFocus placeholder="+7 999 123-45-67" value={phone} onChange={(event) => {

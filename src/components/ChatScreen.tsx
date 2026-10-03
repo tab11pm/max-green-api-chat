@@ -49,7 +49,7 @@ export default function ChatScreen({ client, activeChat, onOpenChat, onCloseChat
         <div className="sidebar-head">
           <span className="brand-mark" aria-hidden="true">М</span>
           <div>
-            <p className="eyebrow">MAX чат</p>
+            <p className="eyebrow">WhatsApp чат</p>
             <h1>Чаты</h1>
           </div>
         </div>

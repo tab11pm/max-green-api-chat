@@ -23,7 +23,7 @@ function textNotification(receiptId: number, senderChatId: string) {
 
 function mockClient() {
   return {
-    checkAccount: vi.fn(),
+    checkWhatsapp: vi.fn(),
     sendText: vi.fn(),
     receiveNotification: vi.fn(),
     deleteNotification: vi.fn().mockResolvedValue(undefined),

@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import App from '../App'
 
-const accountSuccess = () => new Response(JSON.stringify({ exist: true, chatId: 'max-chat-42' }), { status: 200 })
+const accountSuccess = () => new Response(JSON.stringify({ existsWhatsapp: true, chatId: 'whatsapp-chat-42' }), { status: 200 })
 
 function connect() {
   render(<App />)
@@ -77,7 +77,7 @@ it('normalizes a recipient number and opens the returned MAX chat', async () => 
   await openChat(fetchMock)
 
   expect(fetchMock).toHaveBeenCalledWith(
-    expect.stringContaining('/checkAccount/'),
+    expect.stringContaining('/checkWhatsapp/'),
     expect.objectContaining({ body: JSON.stringify({ phoneNumber: 79991234567 }) }),
   )
   expect(screen.getByRole('heading', { name: '+7 (999) 123-45-67' })).toBeInTheDocument()
@@ -85,14 +85,14 @@ it('normalizes a recipient number and opens the returned MAX chat', async () => 
 })
 
 it('keeps the dialog open when a number has no MAX account', async () => {
-  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ exist: false, chatId: '' }), { status: 200 }))
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ existsWhatsapp: false, chatId: '' }), { status: 200 }))
   vi.stubGlobal('fetch', fetchMock)
   connect()
   openDialog()
   fireEvent.change(screen.getByRole('textbox', { name: 'Номер получателя' }), { target: { value: '+7 999 123 45 67' } })
   fireEvent.click(screen.getByRole('button', { name: 'Открыть чат' }))
 
-  expect(await screen.findByText('Этот номер не зарегистрирован в MAX. Проверьте номер и попробуйте снова.')).toBeInTheDocument()
+  expect(await screen.findByText('Этот номер не зарегистрирован в WhatsApp. Проверьте номер и попробуйте снова.')).toBeInTheDocument()
   expect(screen.getByRole('dialog')).toBeInTheDocument()
 })
 
@@ -113,7 +113,7 @@ it('shows an account-check failure and restores the submit control in Strict Mod
 it('does not send whitespace and shows outgoing text only after API success', async () => {
   let resolveSend!: (response: Response) => void
   const fetchMock = vi.fn((url: string) => {
-    if (url.includes('/checkAccount/')) return Promise.resolve(accountSuccess())
+    if (url.includes('/checkWhatsapp/')) return Promise.resolve(accountSuccess())
     if (url.includes('/sendMessage/')) return new Promise<Response>((resolve) => { resolveSend = resolve })
     return Promise.resolve(new Response('null', { status: 200 }))
   })
@@ -132,14 +132,14 @@ it('does not send whitespace and shows outgoing text only after API success', as
   expect(screen.getByText('Привет')).toBeInTheDocument()
   expect(fetchMock).toHaveBeenCalledWith(
     expect.stringContaining('/sendMessage/'),
-    expect.objectContaining({ body: JSON.stringify({ chatId: 'max-chat-42', message: 'Привет' }) }),
+      expect.objectContaining({ body: JSON.stringify({ chatId: 'whatsapp-chat-42', message: 'Привет' }) }),
   )
 })
 
 it('preserves text typed during an in-flight send when that send succeeds', async () => {
   let resolveSend!: (response: Response) => void
   const fetchMock = vi.fn((url: string) => {
-    if (url.includes('/checkAccount/')) return Promise.resolve(accountSuccess())
+    if (url.includes('/checkWhatsapp/')) return Promise.resolve(accountSuccess())
     if (url.includes('/sendMessage/')) return new Promise<Response>((resolve) => { resolveSend = resolve })
     return Promise.resolve(new Response('null', { status: 200 }))
   })
@@ -159,7 +159,7 @@ it('preserves text typed during an in-flight send when that send succeeds', asyn
 it('preserves a retyped draft even when it matches the submitted text', async () => {
   let resolveSend!: (response: Response) => void
   const fetchMock = vi.fn((url: string) => {
-    if (url.includes('/checkAccount/')) return Promise.resolve(accountSuccess())
+    if (url.includes('/checkWhatsapp/')) return Promise.resolve(accountSuccess())
     if (url.includes('/sendMessage/')) return new Promise<Response>((resolve) => { resolveSend = resolve })
     return Promise.resolve(new Response('null', { status: 200 }))
   })
@@ -177,7 +177,7 @@ it('preserves a retyped draft even when it matches the submitted text', async ()
 
 it('shows a neutral status before the first notification check succeeds', async () => {
   const fetchMock = vi.fn((url: string) => {
-    if (url.includes('/checkAccount/')) return Promise.resolve(accountSuccess())
+    if (url.includes('/checkWhatsapp/')) return Promise.resolve(accountSuccess())
     return Promise.resolve(new Response('null', { status: 200 }))
   })
   await openChat(fetchMock)
@@ -190,7 +190,7 @@ it('shows a neutral status before the first notification check succeeds', async 
 it('keeps confirmed messages after a failed send and hides server details', async () => {
   let sends = 0
   const fetchMock = vi.fn((url: string) => {
-    if (url.includes('/checkAccount/')) return Promise.resolve(accountSuccess())
+    if (url.includes('/checkWhatsapp/')) return Promise.resolve(accountSuccess())
     if (url.includes('/sendMessage/')) {
       sends += 1
       return Promise.resolve(sends === 1 ? new Response('{}', { status: 200 }) : new Response('test-token private', { status: 500 }))
@@ -214,12 +214,12 @@ it('keeps confirmed messages after a failed send and hides server details', asyn
 
 it('shows matching incoming text from polling', async () => {
   const fetchMock = vi.fn((url: string) => {
-    if (url.includes('/checkAccount/')) return Promise.resolve(accountSuccess())
+    if (url.includes('/checkWhatsapp/')) return Promise.resolve(accountSuccess())
     if (url.includes('/receiveNotification/')) return Promise.resolve(new Response(JSON.stringify({
       receiptId: 9,
       body: {
         typeWebhook: 'incomingMessageReceived',
-        senderData: { chatId: 'max-chat-42' },
+        senderData: { chatId: 'whatsapp-chat-42' },
         messageData: { typeMessage: 'textMessage', textMessageData: { textMessage: 'Ответ' } },
         timestamp: 1_791_000_000,
       },

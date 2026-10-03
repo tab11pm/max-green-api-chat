@@ -27,18 +27,18 @@ describe('createGreenApiClient', () => {
     );
   });
 
-  it('checks an international number as numeric JSON and returns its MAX chat ID', async () => {
+  it('checks an international number as numeric JSON and returns its WhatsApp chat ID', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(
-      JSON.stringify({ exist: true, chatId: '10000000', fromCache: true }),
+      JSON.stringify({ existsWhatsapp: true, chatId: '10000000' }),
       { status: 200 },
     ));
     vi.stubGlobal('fetch', fetchMock);
 
-    const chatId = await createGreenApiClient(credentials).checkAccount('79991234567');
+    const chatId = await createGreenApiClient(credentials).checkWhatsapp('79991234567');
 
     expect(chatId).toBe('10000000');
     expect(fetchMock).toHaveBeenCalledWith(
-      '/green-api/waInstanceinstance-placeholder/checkAccount/token-placeholder',
+      '/green-api/waInstanceinstance-placeholder/checkWhatsapp/token-placeholder',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,13 +47,13 @@ describe('createGreenApiClient', () => {
     );
   });
 
-  it('returns null when the checked number has no MAX account', async () => {
+  it('returns null when the checked number has no WhatsApp account', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
-      JSON.stringify({ exist: false, chatId: '', fromCache: false }),
+      JSON.stringify({ existsWhatsapp: false, chatId: '' }),
       { status: 200 },
     )));
 
-    await expect(createGreenApiClient(credentials).checkAccount('79991234567'))
+    await expect(createGreenApiClient(credentials).checkWhatsapp('79991234567'))
       .resolves.toBeNull();
   });
 
@@ -63,8 +63,8 @@ describe('createGreenApiClient', () => {
       { status: 200 },
     )));
 
-    await expect(createGreenApiClient(credentials).checkAccount('79991234567'))
-      .rejects.toThrow(/^checkAccount failed \(invalid response\)$/);
+    await expect(createGreenApiClient(credentials).checkWhatsapp('79991234567'))
+      .rejects.toThrow(/^checkWhatsapp failed \(invalid response\)$/);
   });
 
   it('returns a received notification from the GET endpoint', async () => {
@@ -132,7 +132,7 @@ describe('createGreenApiClient', () => {
       { status: 403, statusText: 'token-placeholder' },
     )));
 
-    await expect(createGreenApiClient(credentials).checkAccount('79991234567'))
-      .rejects.toThrow(/^checkAccount failed \(HTTP 403\)$/);
+    await expect(createGreenApiClient(credentials).checkWhatsapp('79991234567'))
+      .rejects.toThrow(/^checkWhatsapp failed \(HTTP 403\)$/);
   });
 });

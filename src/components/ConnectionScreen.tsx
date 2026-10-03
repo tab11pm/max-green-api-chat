@@ -22,7 +22,7 @@ export default function ConnectionScreen({ onConnect }: Props): React.JSX.Elemen
   return (
     <main className="app-shell connection-shell">
       <section className="connection-panel" aria-labelledby="connection-title">
-        <p className="eyebrow">MAX чат</p>
+        <p className="eyebrow">WhatsApp чат</p>
         <h1 id="connection-title">Подключение к GREEN-API</h1>
         <p className="intro">Подключите экземпляр, чтобы начать переписку.</p>
         <form className="connection-form" onSubmit={submit} noValidate>
