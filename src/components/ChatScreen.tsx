@@ -17,29 +17,19 @@ interface Props {
   chats: Array<ActiveChat & { messages: TimelineMessage[] }>
   activeChatId: string | null
   onSelectChat: (chatId: string) => void
-  onMessagesChange: (chatId: string, messages: TimelineMessage[]) => void
+  onMessageAdded: (chatId: string, message: Omit<TimelineMessage, 'id'>) => void
   onOpenChat: (chat: ActiveChat) => void
   onCloseChat: () => void
   onDisconnect: () => void
 }
 
-export default function ChatScreen({ client, chats, activeChatId, onSelectChat, onMessagesChange, onOpenChat, onCloseChat, onDisconnect }: Props): React.JSX.Element {
+export default function ChatScreen({ client, chats, activeChatId, onSelectChat, onMessageAdded, onOpenChat, onCloseChat, onDisconnect }: Props): React.JSX.Element {
   const activeChat = chats.find((chat) => chat.chatId === activeChatId) ?? null
   const [dialogOpen, setDialogOpen] = useState(false)
   const newChatButton = useRef<HTMLButtonElement>(null)
-  const [messages, setMessages] = useState<TimelineMessage[]>(activeChat?.messages ?? [])
-  const messagesRef = useRef(messages)
-  const nextMessageId = useRef(chats.reduce((max, chat) => chat.messages.reduce((chatMax, message) => {
-    const id = Number(message.id)
-    return Number.isSafeInteger(id) && id >= 0 ? Math.max(chatMax, id) : chatMax
-  }, max), 0))
   const appendMessage = useCallback((message: Omit<TimelineMessage, 'id'>) => {
-    const id = String(++nextMessageId.current)
-    const next = [...messagesRef.current, { ...message, id }]
-    messagesRef.current = next
-    if (activeChat) onMessagesChange(activeChat.chatId, next)
-    setMessages(next)
-  }, [activeChat, onMessagesChange])
+    if (activeChat) onMessageAdded(activeChat.chatId, message)
+  }, [activeChat, onMessageAdded])
   const onMessage = useCallback((message: IncomingMessage) => appendMessage(message), [appendMessage])
   const { status } = useNotifications({ client, chatId: activeChat?.chatId ?? null, phone: activeChat?.phone ?? null, onMessage })
 
@@ -92,7 +82,7 @@ export default function ChatScreen({ client, chats, activeChatId, onSelectChat, 
               </div>
               <button className="icon-button" type="button" aria-label="Закрыть чат" onClick={onCloseChat}><Icon name="close" /></button>
             </header>
-            <MessageTimeline messages={messages} />
+            <MessageTimeline messages={activeChat.messages} />
             <Composer onSend={send} />
           </>
         ) : (

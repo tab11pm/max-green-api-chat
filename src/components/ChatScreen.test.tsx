@@ -121,6 +121,72 @@ it('keeps a sent message when its send completes after switching chats', async (
   expect(JSON.parse(sessionStorage.getItem('green-api-chat-session')!).activeChatId).toBe('chat-one')
 })
 
+it('preserves newer messages when an earlier send completes after leaving and returning', async () => {
+  let resolveFirstSend!: (response: Response) => void
+  let sends = 0
+  sessionStorage.setItem('green-api-chat-session', JSON.stringify({
+    credentials: { idInstance: '123', apiTokenInstance: 'test-token' },
+    chats: [
+      { chatId: 'chat-one', phone: '+7 (999) 123-45-67', messages: [] },
+      { chatId: 'chat-two', phone: '+7 (999) 765-43-21', messages: [] },
+    ],
+    activeChatId: 'chat-one',
+  }))
+  vi.stubGlobal('fetch', vi.fn((url: string) => {
+    if (url.includes('/sendMessage/')) {
+      sends += 1
+      return sends === 1 ? new Promise<Response>((resolve) => { resolveFirstSend = resolve }) : Promise.resolve(new Response('{}', { status: 200 }))
+    }
+    return Promise.resolve(new Response('null', { status: 200 }))
+  }))
+  render(<App />)
+
+  fireEvent.change(screen.getByRole('textbox', { name: 'Сообщение' }), { target: { value: 'Первое' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+  fireEvent.click(screen.getByRole('button', { name: '+7 (999) 765-43-21' }))
+  fireEvent.click(screen.getByRole('button', { name: '+7 (999) 123-45-67' }))
+  fireEvent.change(screen.getByRole('textbox', { name: 'Сообщение' }), { target: { value: 'Второе' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+  await screen.findByText('Второе')
+
+  await act(async () => { resolveFirstSend(new Response('{}', { status: 200 })) })
+  expect(screen.getByText('Первое')).toBeInTheDocument()
+  expect(screen.getByText('Второе')).toBeInTheDocument()
+  const messages = JSON.parse(sessionStorage.getItem('green-api-chat-session')!).chats[0].messages
+  expect(messages.map((message: { text: string }) => message.text)).toEqual(['Второе', 'Первое'])
+  expect(new Set(messages.map((message: { id: string }) => message.id)).size).toBe(2)
+})
+
+it('ignores a pending send from a disconnected session after reconnecting with the same credentials', async () => {
+  let resolveOldSend!: (response: Response) => void
+  sessionStorage.setItem('green-api-chat-session', JSON.stringify({
+    credentials: { idInstance: '123', apiTokenInstance: 'test-token' },
+    chats: [{ chatId: 'chat-one', phone: '+7 (999) 123-45-67', messages: [] }],
+    activeChatId: 'chat-one',
+  }))
+  vi.stubGlobal('fetch', vi.fn((url: string) => {
+    if (url.includes('/sendMessage/')) return new Promise<Response>((resolve) => { resolveOldSend = resolve })
+    if (url.includes('/checkWhatsapp/')) return Promise.resolve(new Response(JSON.stringify({ existsWhatsapp: true, chatId: 'chat-one' }), { status: 200 }))
+    return Promise.resolve(new Response('null', { status: 200 }))
+  }))
+  render(<App />)
+
+  fireEvent.change(screen.getByRole('textbox', { name: 'Сообщение' }), { target: { value: 'Из старой сессии' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Отключиться' }))
+  fireEvent.change(screen.getByRole('textbox', { name: 'ID экземпляра' }), { target: { value: '123' } })
+  fireEvent.change(screen.getByLabelText('Токен API'), { target: { value: 'test-token' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }))
+  openDialog()
+  fireEvent.change(screen.getByRole('textbox', { name: 'Номер получателя' }), { target: { value: '+7 (999) 123-45-67' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Открыть чат' }))
+  await screen.findByRole('heading', { name: '+7 (999) 123-45-67' })
+
+  await act(async () => { resolveOldSend(new Response('{}', { status: 200 })) })
+  expect(screen.queryByText('Из старой сессии')).not.toBeInTheDocument()
+  expect(JSON.parse(sessionStorage.getItem('green-api-chat-session')!).chats[0].messages).toEqual([])
+})
+
 it('moves the theme toggle into the sidebar header and gives disconnect its own footer row', async () => {
   await openChat(vi.fn().mockResolvedValue(accountSuccess()))
   expect(document.querySelector('.sidebar-head .theme-toggle')).not.toBeNull()

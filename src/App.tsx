@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { createGreenApiClient, type ConnectionCredentials } from './api/greenApiClient'
 import ChatScreen, { type ActiveChat } from './components/ChatScreen'
 import ConnectionScreen from './components/ConnectionScreen'
@@ -52,6 +52,8 @@ function readSession(): ChatSession | null {
 
 export default function App(): React.JSX.Element {
   const [session, setSession] = useState<ChatSession | null>(readSession)
+  const sessionEpoch = useRef(0)
+  const renderedEpoch = sessionEpoch.current
   const client = useMemo(() => session ? createGreenApiClient(session.credentials) : null, [session])
 
   function saveSession(nextSession: ChatSession) {
@@ -59,19 +61,30 @@ export default function App(): React.JSX.Element {
     setSession(nextSession)
   }
 
-  if (!session || !client) return <ConnectionScreen onConnect={(credentials) => saveSession({ credentials, chats: [], activeChatId: null })} />
+  if (!session || !client) return <ConnectionScreen onConnect={(credentials) => {
+    sessionEpoch.current += 1
+    saveSession({ credentials, chats: [], activeChatId: null })
+  }} />
   const activeSession = session
   const selectedChat = activeSession.chats.find((chat) => chat.chatId === activeSession.activeChatId) ?? null
 
-  return <ChatScreen key={selectedChat?.chatId ?? 'empty'} client={client} chats={activeSession.chats} activeChatId={activeSession.activeChatId} onSelectChat={(chatId) => saveSession({ ...activeSession, activeChatId: chatId })} onMessagesChange={(chatId, messages) => {
+  return <ChatScreen key={selectedChat?.chatId ?? 'empty'} client={client} chats={activeSession.chats} activeChatId={activeSession.activeChatId} onSelectChat={(chatId) => saveSession({ ...activeSession, activeChatId: chatId })} onMessageAdded={(chatId, message) => {
+    if (renderedEpoch !== sessionEpoch.current) return
     const latestSession = readSession()
     if (!latestSession || latestSession.credentials.idInstance !== activeSession.credentials.idInstance || latestSession.credentials.apiTokenInstance !== activeSession.credentials.apiTokenInstance) return
-    saveSession({ ...latestSession, chats: latestSession.chats.map((chat) => chat.chatId === chatId ? { ...chat, messages } : chat) })
+    if (!latestSession.chats.some((chat) => chat.chatId === chatId)) return
+    const highestId = latestSession.chats.reduce((max, chat) => chat.messages.reduce((chatMax, savedMessage) => {
+      const id = Number(savedMessage.id)
+      return Number.isSafeInteger(id) && id >= 0 ? Math.max(chatMax, id) : chatMax
+    }, max), 0)
+    const nextMessage = { ...message, id: String(highestId + 1) }
+    saveSession({ ...latestSession, chats: latestSession.chats.map((chat) => chat.chatId === chatId ? { ...chat, messages: [...chat.messages, nextMessage] } : chat) })
   }} onOpenChat={(activeChat) => saveSession({
     ...activeSession,
     chats: activeSession.chats.some((chat) => chat.chatId === activeChat.chatId) ? activeSession.chats : [...activeSession.chats, { ...activeChat, messages: [] }],
     activeChatId: activeChat.chatId,
   })} onCloseChat={() => saveSession({ ...activeSession, activeChatId: null })} onDisconnect={() => {
+    sessionEpoch.current += 1
     sessionStorage.removeItem(SESSION_KEY)
     setSession(null)
   }} />
