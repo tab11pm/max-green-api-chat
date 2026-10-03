@@ -69,7 +69,15 @@ export function createGreenApiClient(credentials: ConnectionCredentials) {
     },
 
     async deleteNotification(receiptId: number): Promise<void> {
-      await request('deleteNotification', { method: 'DELETE' }, receiptId);
+      const response = await request('deleteNotification', { method: 'DELETE' }, receiptId);
+      const result = await readJson('deleteNotification', response);
+      if (typeof result === 'object' && result !== null && 'result' in result) {
+        if (result.result === true) return;
+        if (result.result === false) {
+          throw new Error('deleteNotification failed (not acknowledged)');
+        }
+      }
+      throw new Error('deleteNotification failed (invalid response)');
     },
   };
 }

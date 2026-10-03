@@ -95,7 +95,10 @@ describe('createGreenApiClient', () => {
   });
 
   it('deletes a notification by receipt ID', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response('true', { status: 200 }));
+    const fetchMock = vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({ result: true, reason: '' }),
+      { status: 200 },
+    ));
     vi.stubGlobal('fetch', fetchMock);
 
     await createGreenApiClient(credentials).deleteNotification(42);
@@ -104,6 +107,23 @@ describe('createGreenApiClient', () => {
       'https://api.green-api.com/waInstanceinstance-placeholder/deleteNotification/token-placeholder/42',
       { method: 'DELETE' },
     );
+  });
+
+  it('rejects an unsuccessful delete without exposing the server reason', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({ result: false, reason: 'token-placeholder in reason' }),
+      { status: 200 },
+    )));
+
+    await expect(createGreenApiClient(credentials).deleteNotification(42))
+      .rejects.toThrow(/^deleteNotification failed \(not acknowledged\)$/);
+  });
+
+  it('rejects an unexpected delete response safely', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('null', { status: 200 })));
+
+    await expect(createGreenApiClient(credentials).deleteNotification(42))
+      .rejects.toThrow(/^deleteNotification failed \(invalid response\)$/);
   });
 
   it('reports only the operation and HTTP status on a failed request', async () => {
