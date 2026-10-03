@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import App from '../App'
 
@@ -268,16 +268,18 @@ it('normalizes a recipient number and opens the returned MAX chat', async () => 
 })
 
 it('selects an existing chat instead of adding it twice', async () => {
-  const fetchMock = vi.fn().mockResolvedValue(accountSuccess())
+  const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(accountSuccess()))
   await openChat(fetchMock)
 
   openDialog()
   fireEvent.change(screen.getByRole('textbox', { name: 'Номер получателя' }), {
     target: { value: '+7 (999) 123-45-67' },
   })
+  const dialog = screen.getByRole('dialog')
   fireEvent.click(screen.getByRole('button', { name: 'Открыть чат' }))
 
-  await screen.findByRole('heading', { name: '+7 (999) 123-45-67' })
+  await waitForElementToBeRemoved(dialog)
+  expect(fetchMock).toHaveBeenCalledTimes(2)
   expect(screen.getAllByRole('button', { name: /\+7 \(999\) 123-45-67/ })).toHaveLength(1)
   expect(JSON.parse(sessionStorage.getItem('green-api-chat-session')!).chats).toHaveLength(1)
 })
