@@ -52,6 +52,18 @@ npm run test -- --run
 npm run build
 ```
 
+To diagnose the GREEN-API connection without starting the UI, provide the
+instance host, ID, and token through the shell environment and run:
+
+```sh
+GREEN_API_URL=https://your-cluster.api.green-api.com \
+GREEN_API_ID=your-id GREEN_API_TOKEN=your-token npm run check:green-api
+```
+
+The script calls `getStateInstance`, masks the instance ID, never prints the
+token or the response body, and exits non-zero for a wrong host, invalid
+credentials, or a non-authorized instance.
+
 Real GREEN-API acceptance requires a MAX-enabled instance and valid credentials:
 connect, open a chat using an international phone number, send a text, reply
 from MAX, confirm the incoming text appears, and refresh to confirm credentials
