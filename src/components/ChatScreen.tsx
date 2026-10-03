@@ -13,29 +13,33 @@ export interface ActiveChat {
 interface Props {
   client: GreenApiClient
   activeChat: ActiveChat | null
+  initialMessages: TimelineMessage[]
+  onMessagesChange: (messages: TimelineMessage[]) => void
   onOpenChat: (chat: ActiveChat) => void
   onCloseChat: () => void
   onDisconnect: () => void
 }
 
-export default function ChatScreen({ client, activeChat, onOpenChat, onCloseChat, onDisconnect }: Props): React.JSX.Element {
+export default function ChatScreen({ client, activeChat, initialMessages, onMessagesChange, onOpenChat, onCloseChat, onDisconnect }: Props): React.JSX.Element {
   const [dialogOpen, setDialogOpen] = useState(false)
   const newChatButton = useRef<HTMLButtonElement>(null)
-  const [messages, setMessages] = useState<TimelineMessage[]>([])
+  const [messages, setMessages] = useState<TimelineMessage[]>(initialMessages)
   const nextMessageId = useRef(0)
-  const onMessage = useCallback((message: IncomingMessage) => {
+  const appendMessage = useCallback((message: Omit<TimelineMessage, 'id'>) => {
     const id = String(++nextMessageId.current)
-    setMessages((previous) => [...previous, { ...message, id }])
-  }, [])
+    setMessages((previous) => {
+      const next = [...previous, { ...message, id }]
+      onMessagesChange(next)
+      return next
+    })
+  }, [onMessagesChange])
+  const onMessage = useCallback((message: IncomingMessage) => appendMessage(message), [appendMessage])
   const { status } = useNotifications({ client, chatId: activeChat?.chatId ?? null, phone: activeChat?.phone ?? null, onMessage })
 
   async function send(text: string) {
     if (!activeChat) return
     await client.sendText(activeChat.chatId, text)
-    const id = String(++nextMessageId.current)
-    setMessages((previous) => [...previous, {
-      id, direction: 'outgoing', text, timestamp: Date.now() / 1000,
-    }])
+    appendMessage({ direction: 'outgoing', text, timestamp: Date.now() / 1000 })
   }
 
   function closeDialog() {

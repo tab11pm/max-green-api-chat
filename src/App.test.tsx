@@ -23,6 +23,21 @@ test('restores an in-progress chat session after a page reload', () => {
   expect(screen.getByRole('heading', { name: '+7 999 123-45-67' })).toBeInTheDocument()
 })
 
+test('restores saved chats and their messages after a page reload', () => {
+  sessionStorage.setItem('green-api-chat-session', JSON.stringify({
+    credentials: { idInstance: '123', apiTokenInstance: 'token' },
+    activeChat: {
+      chatId: 'whatsapp-chat-42',
+      phone: '+7 999 123-45-67',
+    },
+    messages: [{ id: '1', direction: 'incoming', text: 'Сохранённый ответ', timestamp: 1_791_000_000 }],
+  }))
+
+  render(<App />)
+
+  expect(screen.getByText('Сохранённый ответ')).toBeInTheDocument()
+})
+
 test('clears the stored session when the user disconnects', () => {
   sessionStorage.setItem('green-api-chat-session', JSON.stringify({
     credentials: { idInstance: '123', apiTokenInstance: 'token' },

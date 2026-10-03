@@ -2,12 +2,14 @@ import { useMemo, useState } from 'react'
 import { createGreenApiClient, type ConnectionCredentials } from './api/greenApiClient'
 import ChatScreen, { type ActiveChat } from './components/ChatScreen'
 import ConnectionScreen from './components/ConnectionScreen'
+import type { TimelineMessage } from './components/MessageTimeline'
 
 const SESSION_KEY = 'green-api-chat-session'
 
 interface ChatSession {
   credentials: ConnectionCredentials
   activeChat: ActiveChat | null
+  messages: TimelineMessage[]
 }
 
 function readSession(): ChatSession | null {
@@ -39,10 +41,10 @@ export default function App(): React.JSX.Element {
     setSession(nextSession)
   }
 
-  if (!session || !client) return <ConnectionScreen onConnect={(credentials) => saveSession({ credentials, activeChat: null })} />
+  if (!session || !client) return <ConnectionScreen onConnect={(credentials) => saveSession({ credentials, activeChat: null, messages: [] })} />
   const activeSession = session
 
-  return <ChatScreen key={activeSession.activeChat?.chatId ?? 'empty'} client={client} activeChat={activeSession.activeChat} onOpenChat={(activeChat) => saveSession({ ...activeSession, activeChat })} onCloseChat={() => saveSession({ ...activeSession, activeChat: null })} onDisconnect={() => {
+  return <ChatScreen key={activeSession.activeChat?.chatId ?? 'empty'} client={client} activeChat={activeSession.activeChat} initialMessages={activeSession.messages ?? []} onMessagesChange={(messages) => saveSession({ ...activeSession, messages })} onOpenChat={(activeChat) => saveSession({ ...activeSession, activeChat, messages: [] })} onCloseChat={() => saveSession({ ...activeSession, activeChat: null })} onDisconnect={() => {
     sessionStorage.removeItem(SESSION_KEY)
     setSession(null)
   }} />
