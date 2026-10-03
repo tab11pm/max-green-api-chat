@@ -79,11 +79,16 @@ export default function App(): React.JSX.Element {
     }, max), 0)
     const nextMessage = { ...message, id: String(highestId + 1) }
     saveSession({ ...latestSession, chats: latestSession.chats.map((chat) => chat.chatId === chatId ? { ...chat, messages: [...chat.messages, nextMessage] } : chat) })
-  }} onOpenChat={(activeChat) => saveSession({
-    ...activeSession,
-    chats: activeSession.chats.some((chat) => chat.chatId === activeChat.chatId) ? activeSession.chats : [...activeSession.chats, { ...activeChat, messages: [] }],
-    activeChatId: activeChat.chatId,
-  })} onCloseChat={() => saveSession({ ...activeSession, activeChatId: null })} onDisconnect={() => {
+  }} onOpenChat={(activeChat) => {
+    if (renderedEpoch !== sessionEpoch.current) return
+    const latestSession = readSession()
+    if (!latestSession || latestSession.credentials.idInstance !== activeSession.credentials.idInstance || latestSession.credentials.apiTokenInstance !== activeSession.credentials.apiTokenInstance) return
+    saveSession({
+      ...latestSession,
+      chats: latestSession.chats.some((chat) => chat.chatId === activeChat.chatId) ? latestSession.chats : [...latestSession.chats, { ...activeChat, messages: [] }],
+      activeChatId: activeChat.chatId,
+    })
+  }} onCloseChat={() => saveSession({ ...activeSession, activeChatId: null })} onDisconnect={() => {
     sessionEpoch.current += 1
     sessionStorage.removeItem(SESSION_KEY)
     setSession(null)

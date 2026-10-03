@@ -187,6 +187,41 @@ it('ignores a pending send from a disconnected session after reconnecting with t
   expect(JSON.parse(sessionStorage.getItem('green-api-chat-session')!).chats[0].messages).toEqual([])
 })
 
+it.each([
+  { caseName: 'new chat', targetChatId: 'chat-two', targetPhone: '+7 (999) 765-43-21' },
+  { caseName: 'existing chat', targetChatId: 'chat-one', targetPhone: '+7 (999) 123-45-67' },
+])('keeps a delivered message when opening $caseName finishes afterward', async ({ targetChatId, targetPhone }) => {
+  let resolveSend!: (response: Response) => void
+  let resolveCheck!: (response: Response) => void
+  sessionStorage.setItem('green-api-chat-session', JSON.stringify({
+    credentials: { idInstance: '123', apiTokenInstance: 'test-token' },
+    chats: [{ chatId: 'chat-one', phone: '+7 (999) 123-45-67', messages: [] }],
+    activeChatId: 'chat-one',
+  }))
+  vi.stubGlobal('fetch', vi.fn((url: string) => {
+    if (url.includes('/sendMessage/')) return new Promise<Response>((resolve) => { resolveSend = resolve })
+    if (url.includes('/checkWhatsapp/')) return new Promise<Response>((resolve) => { resolveCheck = resolve })
+    return Promise.resolve(new Response('null', { status: 200 }))
+  }))
+  render(<App />)
+
+  fireEvent.change(screen.getByRole('textbox', { name: 'Сообщение' }), { target: { value: 'Сообщение A' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+  openDialog()
+  fireEvent.change(screen.getByRole('textbox', { name: 'Номер получателя' }), { target: { value: targetPhone } })
+  fireEvent.click(screen.getByRole('button', { name: 'Открыть чат' }))
+
+  await act(async () => { resolveSend(new Response('{}', { status: 200 })) })
+  expect(screen.getByText('Сообщение A')).toBeInTheDocument()
+  await act(async () => { resolveCheck(new Response(JSON.stringify({ existsWhatsapp: true, chatId: targetChatId }), { status: 200 })) })
+
+  expect(screen.getByRole('heading', { name: targetPhone })).toBeInTheDocument()
+  const saved = JSON.parse(sessionStorage.getItem('green-api-chat-session')!)
+  expect(saved.activeChatId).toBe(targetChatId)
+  expect(saved.chats).toHaveLength(targetChatId === 'chat-one' ? 1 : 2)
+  expect(saved.chats.find((chat: { chatId: string }) => chat.chatId === 'chat-one').messages).toMatchObject([{ text: 'Сообщение A' }])
+})
+
 it('moves the theme toggle into the sidebar header and gives disconnect its own footer row', async () => {
   await openChat(vi.fn().mockResolvedValue(accountSuccess()))
   expect(document.querySelector('.sidebar-head .theme-toggle')).not.toBeNull()
