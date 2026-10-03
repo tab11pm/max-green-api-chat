@@ -8,6 +8,7 @@ const credentials = {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe('createGreenApiClient', () => {
@@ -24,6 +25,19 @@ describe('createGreenApiClient', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chatId: 'recipient-chat-id', message: 'Привет' }),
       },
+    );
+  });
+
+  it('uses a direct GREEN-API host when VITE_GREEN_API_URL is set for CORS diagnostics', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubEnv('VITE_GREEN_API_URL', 'https://7107.api.greenapi.com/');
+
+    await createGreenApiClient(credentials).sendText('recipient-chat-id', 'Привет');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://7107.api.greenapi.com/waInstanceinstance-placeholder/sendMessage/token-placeholder',
+      expect.any(Object),
     );
   });
 

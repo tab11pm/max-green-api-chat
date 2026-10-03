@@ -5,11 +5,14 @@ export interface ConnectionCredentials {
   apiTokenInstance: string;
 }
 
-const API_BASE_PATH = '/green-api';
+function getApiBasePath(): string {
+  return import.meta.env.VITE_GREEN_API_URL?.replace(/\/$/, '') || '/green-api';
+}
 
 export function createGreenApiClient(credentials: ConnectionCredentials) {
+  const apiBasePath = getApiBasePath();
   const endpoint = (operation: string) =>
-    `${API_BASE_PATH}/waInstance${credentials.idInstance}/${operation}/${credentials.apiTokenInstance}`;
+    `${apiBasePath}/waInstance${credentials.idInstance}/${operation}/${credentials.apiTokenInstance}`;
 
   async function request(operation: string, options: RequestInit, receiptId?: number): Promise<Response> {
     let response: Response;
