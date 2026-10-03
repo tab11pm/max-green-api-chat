@@ -39,3 +39,12 @@ it('gives each credential field a leading icon', () => {
 
   expect(container.querySelectorAll('.field-control svg')).toHaveLength(2)
 })
+
+it('renders the brand inside a gradient header band above the form', () => {
+  const { container } = render(<App />)
+  const head = container.querySelector('.connection-head')
+
+  expect(head).not.toBeNull()
+  expect(head?.querySelector('.brand-wordmark')?.textContent).toBe('Кайтома')
+  expect(screen.getByRole('heading', { name: 'Подключение к GREEN-API' })).toBeInTheDocument()
+})
