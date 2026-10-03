@@ -48,6 +48,13 @@ it('renders a theme toggle in the sidebar', async () => {
   expect(screen.getByRole('button', { name: 'Переключить тему' })).toBeInTheDocument()
 })
 
+it('moves the theme toggle into the sidebar header and gives disconnect its own footer row', async () => {
+  await openChat(vi.fn().mockResolvedValue(accountSuccess()))
+  expect(document.querySelector('.sidebar-head .theme-toggle')).not.toBeNull()
+  expect(document.querySelector('.sidebar-foot')).toBeNull()
+  expect(screen.getByRole('button', { name: 'Отключиться' })).toHaveClass('disconnect-button')
+})
+
 it('uses an icon send button with an accessible name', async () => {
   await openChat(vi.fn().mockResolvedValue(accountSuccess()))
   const send = screen.getByRole('button', { name: 'Отправить' })

@@ -6,13 +6,13 @@ export default function ThemeToggle(): React.JSX.Element {
   const [theme, setTheme] = useState<Theme>(resolveInitialTheme)
   return (
     <button
-      className="theme-toggle"
+      className="icon-button theme-toggle"
       type="button"
       aria-label="Переключить тему"
+      title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
       onClick={() => setTheme(toggleTheme())}
     >
-      <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} />
-      <span>{theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}</span>
+      <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
     </button>
   )
 }

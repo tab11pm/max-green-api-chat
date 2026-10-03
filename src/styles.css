@@ -206,20 +206,6 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   background: var(--k-gradient);
 }
 
-.theme-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--k-border);
-  border-radius: var(--k-radius-pill);
-  padding: 10px 18px;
-  color: var(--k-text);
-  background: var(--k-surface);
-  font-size: var(--k-text-label);
-  font-weight: 600;
-}
-.theme-toggle:hover { border-color: var(--k-accent); color: var(--k-accent); }
-
 /* ---------- Connection screen ---------- */
 .app-shell {
   position: relative;
@@ -409,6 +395,7 @@ input[aria-invalid="true"] { border-color: var(--k-error); }
   align-items: center;
   gap: 12px;
 }
+.sidebar-head .theme-toggle { margin-left: auto; }
 .sidebar-head h1 {
   font-size: var(--k-text-title);
   line-height: var(--k-leading-title);
@@ -463,15 +450,23 @@ input[aria-invalid="true"] { border-color: var(--k-error); }
   font-size: var(--k-text-label);
   line-height: 1.5;
 }
-.sidebar-foot {
+.disconnect-button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
+  width: 100%;
   margin-top: auto;
+  padding: 16px 4px 4px;
+  border: 0;
+  border-top: 1px solid var(--k-border);
+  border-radius: 0;
+  color: var(--k-muted);
+  background: transparent;
+  font-size: var(--k-text-label);
+  font-weight: 600;
+  text-align: left;
 }
-.disconnect-button { color: var(--k-muted); }
-.disconnect-button:hover { color: var(--k-accent); }
+.disconnect-button:hover { color: var(--k-error); }
 
 /* ---------- Chat surface ---------- */
 .chat-surface {
@@ -692,22 +687,28 @@ input[aria-invalid="true"] { border-color: var(--k-error); }
     border-radius: 0;
   }
   .chat-sidebar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
+    flex-direction: row;
     align-items: center;
     gap: 8px;
     padding: 10px 12px;
     border-right: 0;
     border-bottom: 1px solid var(--k-border);
   }
-  .sidebar-head { gap: 8px; }
-  .sidebar-head h1 { font-size: 1.05rem; }
+  .sidebar-head { gap: 8px; margin-right: auto; }
+  .sidebar-head h1,
   .sidebar-head .eyebrow,
   .sidebar-empty,
   .chat-preview { display: none; }
   .sidebar-head .brand-mark { width: 36px; height: 36px; font-size: 16px; }
-  .new-chat-button { width: auto; padding: 10px 16px; font-size: 14px; }
-  .sidebar-foot { margin: 0; }
+  .new-chat-button { width: auto; padding: 10px 14px; font-size: 14px; }
+  .disconnect-button {
+    width: auto;
+    margin: 0;
+    padding: 10px;
+    border-top: 0;
+    border-radius: var(--k-radius-pill);
+  }
   .disconnect-button span { display: none; }
   .chat-surface { flex: 1; }
   .chat-header { min-height: 4rem; padding: 10px 14px; }

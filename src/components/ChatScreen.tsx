@@ -58,6 +58,7 @@ export default function ChatScreen({ client, activeChat, initialMessages, onMess
             <p className="eyebrow">GREEN-API · MAX</p>
             <h1>Чаты</h1>
           </div>
+          <ThemeToggle />
         </div>
         <button ref={newChatButton} className="primary-button new-chat-button" type="button" onClick={() => setDialogOpen(true)}><Icon name="plus" size={16} />Новый чат</button>
         {activeChat ? (
@@ -66,10 +67,7 @@ export default function ChatScreen({ client, activeChat, initialMessages, onMess
             <span className="chat-preview-copy"><strong>{activeChat.phone}</strong><small>Текущий чат</small></span>
           </div>
         ) : <p className="sidebar-empty">Откройте чат по номеру телефона, чтобы начать переписку.</p>}
-        <div className="sidebar-foot">
-          <ThemeToggle />
-          <button className="text-button disconnect-button" type="button" aria-label="Отключиться" onClick={onDisconnect}><Icon name="logout" size={16} /><span>Отключиться</span></button>
-        </div>
+        <button className="disconnect-button" type="button" aria-label="Отключиться" onClick={onDisconnect}><Icon name="logout" size={16} /><span>Отключиться</span></button>
       </aside>
 
       <section className="chat-surface" aria-label="Переписка">
