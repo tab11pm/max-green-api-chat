@@ -2,8 +2,10 @@ import { useCallback, useRef, useState } from 'react'
 import type { IncomingMessage } from '../domain/notifications'
 import { useNotifications, type GreenApiClient } from '../hooks/useNotifications'
 import Composer from './Composer'
+import Icon from './Icon'
 import MessageTimeline, { type TimelineMessage } from './MessageTimeline'
 import NewChatDialog from './NewChatDialog'
+import ThemeToggle from './ThemeToggle'
 
 export interface ActiveChat {
   chatId: string
@@ -51,40 +53,44 @@ export default function ChatScreen({ client, activeChat, initialMessages, onMess
     <main className="messenger-shell">
       <aside className="chat-sidebar" aria-label="Навигация по чатам">
         <div className="sidebar-head">
-          <span className="brand-mark" aria-hidden="true">М</span>
+          <span className="brand-mark" aria-hidden="true">К</span>
           <div>
-            <p className="eyebrow">WhatsApp чат</p>
+            <p className="eyebrow">GREEN-API · MAX</p>
             <h1>Чаты</h1>
           </div>
         </div>
-        <button ref={newChatButton} className="primary-button new-chat-button" type="button" onClick={() => setDialogOpen(true)}>Новый чат</button>
+        <button ref={newChatButton} className="primary-button new-chat-button" type="button" onClick={() => setDialogOpen(true)}><Icon name="plus" size={16} />Новый чат</button>
         {activeChat ? (
           <div className="chat-preview" aria-current="page">
-            <span className="avatar" aria-hidden="true">{activeChat.phone.replace(/\D/g, '').slice(-2)}</span>
+            <span className="avatar" aria-hidden="true"><Icon name="chat" /></span>
             <span className="chat-preview-copy"><strong>{activeChat.phone}</strong><small>Текущий чат</small></span>
           </div>
         ) : <p className="sidebar-empty">Откройте чат по номеру телефона, чтобы начать переписку.</p>}
-        <button className="text-button disconnect-button" type="button" onClick={onDisconnect}>Отключиться</button>
+        <div className="sidebar-foot">
+          <ThemeToggle />
+          <button className="text-button disconnect-button" type="button" aria-label="Отключиться" onClick={onDisconnect}><Icon name="logout" size={16} /><span>Отключиться</span></button>
+        </div>
       </aside>
 
       <section className="chat-surface" aria-label="Переписка">
         {activeChat ? (
           <>
             <header className="chat-header">
-              <div>
-                <h2>{activeChat.phone}</h2>
+              <span className="avatar" aria-hidden="true">{activeChat.phone.replace(/\D/g, '').slice(-2)}</span>
+              <div className="chat-identity">
+                <h2><Icon name="phone" size={16} />{activeChat.phone}</h2>
                 <p className={`transport-status ${status === 'issue' ? 'is-issue' : ''}`} role="status">
                   {status === 'issue' ? 'Проблема с подключением. Проверяем снова…' : status === 'checking' ? 'Проверяем подключение…' : 'Подключено'}
                 </p>
               </div>
-              <button className="text-button" type="button" onClick={onCloseChat}>Закрыть чат</button>
+              <button className="icon-button" type="button" aria-label="Закрыть чат" onClick={onCloseChat}><Icon name="close" /></button>
             </header>
             <MessageTimeline messages={messages} />
             <Composer onSend={send} />
           </>
         ) : (
           <div className="chat-empty">
-            <span className="empty-icon" aria-hidden="true">✦</span>
+            <span className="empty-icon" aria-hidden="true"><Icon name="chat" size={24} /></span>
             <h2>Выберите, с кем начать разговор</h2>
             <p>Создайте чат по номеру телефона в международном формате.</p>
           </div>

@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { ConnectionCredentials } from '../api/greenApiClient'
+import Icon from './Icon'
+import ThemeToggle from './ThemeToggle'
 
 interface Props {
   onConnect: (credentials: ConnectionCredentials) => void
@@ -21,18 +23,32 @@ export default function ConnectionScreen({ onConnect }: Props): React.JSX.Elemen
 
   return (
     <main className="app-shell connection-shell">
+      <div className="shell-toolbar">
+        <ThemeToggle />
+      </div>
+      <section className="connection-brand">
+        <span className="brand-mark" aria-hidden="true">К</span>
+        <p className="brand-wordmark">Кайтома</p>
+        <p className="tagline"><Icon name="shield" size={16} />Чат MAX через GREEN-API</p>
+      </section>
       <section className="connection-panel" aria-labelledby="connection-title">
-        <p className="eyebrow">WhatsApp чат</p>
+        <p className="eyebrow"><Icon name="plug" size={16} />GREEN-API · MAX</p>
         <h1 id="connection-title">Подключение к GREEN-API</h1>
         <p className="intro">Подключите экземпляр, чтобы начать переписку.</p>
         <form className="connection-form" onSubmit={submit} noValidate>
-          <label htmlFor="instance-id">ID экземпляра</label>
-          <input id="instance-id" autoComplete="off" value={idInstance} onChange={(event) => setIdInstance(event.target.value)} aria-invalid={idError} aria-describedby={idError ? 'id-error' : undefined} />
+          <label htmlFor="instance-id"><Icon name="id-card" size={16} />ID экземпляра</label>
+          <div className="field-control">
+            <Icon name="id-card" />
+            <input id="instance-id" autoComplete="off" value={idInstance} onChange={(event) => setIdInstance(event.target.value)} aria-invalid={idError} aria-describedby={idError ? 'id-error' : undefined} />
+          </div>
           {idError && <p className="field-error" id="id-error">Введите ID экземпляра</p>}
-          <label htmlFor="api-token">Токен API</label>
-          <input id="api-token" type="password" autoComplete="off" value={apiTokenInstance} onChange={(event) => setApiTokenInstance(event.target.value)} aria-invalid={tokenError} aria-describedby={tokenError ? 'token-error' : undefined} />
+          <label htmlFor="api-token"><Icon name="lock" size={16} />Токен API</label>
+          <div className="field-control">
+            <Icon name="lock" />
+            <input id="api-token" type="password" autoComplete="off" value={apiTokenInstance} onChange={(event) => setApiTokenInstance(event.target.value)} aria-invalid={tokenError} aria-describedby={tokenError ? 'token-error' : undefined} />
+          </div>
           {tokenError && <p className="field-error" id="token-error">Введите токен API</p>}
-          <button className="primary-button" type="submit">Продолжить</button>
+          <button className="primary-button" type="submit">Продолжить<Icon name="arrow-right" /></button>
         </form>
       </section>
     </main>

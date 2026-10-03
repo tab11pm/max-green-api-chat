@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { normalizePhone } from '../domain/phone'
 import type { GreenApiClient } from '../hooks/useNotifications'
 import type { ActiveChat } from './ChatScreen'
+import Icon from './Icon'
 
 interface Props {
   client: GreenApiClient
@@ -34,7 +35,7 @@ export default function NewChatDialog({ client, onClose, onOpenChat }: Props): R
       const chatId = await client.checkWhatsapp(normalized)
       if (cancelled.current) return
       if (chatId) onOpenChat({ chatId, phone: phone.trim() })
-      else setError('Этот номер не зарегистрирован в WhatsApp. Проверьте номер и попробуйте снова.')
+      else setError('Этот номер не зарегистрирован в MAX. Проверьте номер и попробуйте снова.')
     } catch {
       if (!cancelled.current) setError('Не удалось проверить номер. Проверьте подключение и попробуйте снова.')
     } finally {
@@ -65,20 +66,23 @@ export default function NewChatDialog({ client, onClose, onOpenChat }: Props): R
           }
         }
       }}>
-        <button className="dialog-close" type="button" aria-label="Закрыть окно" onClick={close}>×</button>
+        <button className="icon-button dialog-close" type="button" aria-label="Закрыть окно" onClick={close}><Icon name="close" /></button>
         <h2 id="new-chat-title">Новый чат</h2>
-        <p>Введите номер человека, с которым хотите переписываться в WhatsApp.</p>
+        <p>Введите номер человека, с которым хотите переписываться в MAX.</p>
         <form onSubmit={submit} noValidate>
           <label htmlFor="recipient-phone">Номер получателя</label>
-          <input id="recipient-phone" type="tel" inputMode="tel" autoComplete="off" autoFocus placeholder="+7 999 123-45-67" value={phone} onChange={(event) => {
-            setPhone(event.target.value)
-            setError('')
-          }} aria-invalid={Boolean(error)} aria-describedby={error ? 'phone-error' : 'phone-hint'} />
+          <div className="field-control">
+            <Icon name="phone" />
+            <input id="recipient-phone" type="tel" inputMode="tel" autoComplete="off" autoFocus placeholder="+7 999 123-45-67" value={phone} onChange={(event) => {
+              setPhone(event.target.value)
+              setError('')
+            }} aria-invalid={Boolean(error)} aria-describedby={error ? 'phone-error' : 'phone-hint'} />
+          </div>
           <p className="field-hint" id="phone-hint">Подойдут номера России и Беларуси.</p>
           {error && <p className="field-error" id="phone-error" role="alert">{error}</p>}
           <div className="dialog-actions">
             <button className="secondary-button" type="button" onClick={close}>Отмена</button>
-            <button className="primary-button" type="submit" disabled={checking}>{checking ? 'Проверка…' : 'Открыть чат'}</button>
+            <button className="primary-button" type="submit" disabled={checking}>{checking ? 'Проверка…' : 'Открыть чат'}<Icon name="arrow-right" /></button>
           </div>
         </form>
       </section>

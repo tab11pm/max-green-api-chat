@@ -36,6 +36,40 @@ afterEach(() => {
 
 beforeEach(() => sessionStorage.clear())
 
+it('exposes an icon-only close control with an accessible name', async () => {
+  await openChat(vi.fn().mockResolvedValue(accountSuccess()))
+  const close = screen.getByRole('button', { name: 'Закрыть чат' })
+  expect(close).toHaveClass('icon-button')
+  expect(close.querySelector('svg')).not.toBeNull()
+})
+
+it('renders a theme toggle in the sidebar', async () => {
+  await openChat(vi.fn().mockResolvedValue(accountSuccess()))
+  expect(screen.getByRole('button', { name: 'Переключить тему' })).toBeInTheDocument()
+})
+
+it('uses an icon send button with an accessible name', async () => {
+  await openChat(vi.fn().mockResolvedValue(accountSuccess()))
+  const send = screen.getByRole('button', { name: 'Отправить' })
+  expect(send).toHaveClass('icon-button')
+  expect(send.querySelector('svg')).not.toBeNull()
+})
+
+it('shows the outgoing timestamp and delivery icon', async () => {
+  const fetchMock = vi.fn((url: string) => {
+    if (url.includes('/checkWhatsapp/')) return Promise.resolve(accountSuccess())
+    if (url.includes('/sendMessage/')) return Promise.resolve(new Response(JSON.stringify({ idMessage: 'm1' }), { status: 200 }))
+    return Promise.resolve(new Response('{}', { status: 200 }))
+  })
+  await openChat(fetchMock)
+
+  fireEvent.change(screen.getByRole('textbox', { name: 'Сообщение' }), { target: { value: 'Привет' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+
+  expect(await screen.findByText(/\d{2}:\d{2}/)).toBeInTheDocument()
+  expect(document.querySelector('.bubble-out .meta svg')).not.toBeNull()
+})
+
 it('validates a recipient before sending an account request', () => {
   const fetchMock = vi.fn()
   vi.stubGlobal('fetch', fetchMock)
@@ -95,7 +129,7 @@ it('keeps the dialog open when a number has no MAX account', async () => {
   fireEvent.change(screen.getByRole('textbox', { name: 'Номер получателя' }), { target: { value: '+7 999 123 45 67' } })
   fireEvent.click(screen.getByRole('button', { name: 'Открыть чат' }))
 
-  expect(await screen.findByText('Этот номер не зарегистрирован в WhatsApp. Проверьте номер и попробуйте снова.')).toBeInTheDocument()
+  expect(await screen.findByText('Этот номер не зарегистрирован в MAX. Проверьте номер и попробуйте снова.')).toBeInTheDocument()
   expect(screen.getByRole('dialog')).toBeInTheDocument()
 })
 
