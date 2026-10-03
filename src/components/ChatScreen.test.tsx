@@ -36,6 +36,18 @@ afterEach(() => {
 
 beforeEach(() => sessionStorage.clear())
 
+it('exposes an icon-only close control with an accessible name', async () => {
+  await openChat(vi.fn().mockResolvedValue(accountSuccess()))
+  const close = screen.getByRole('button', { name: 'Закрыть чат' })
+  expect(close).toHaveClass('icon-button')
+  expect(close.querySelector('svg')).not.toBeNull()
+})
+
+it('renders a theme toggle in the sidebar', async () => {
+  await openChat(vi.fn().mockResolvedValue(accountSuccess()))
+  expect(screen.getByRole('button', { name: 'Переключить тему' })).toBeInTheDocument()
+})
+
 it('validates a recipient before sending an account request', () => {
   const fetchMock = vi.fn()
   vi.stubGlobal('fetch', fetchMock)
