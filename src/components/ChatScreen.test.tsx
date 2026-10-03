@@ -267,6 +267,21 @@ it('normalizes a recipient number and opens the returned MAX chat', async () => 
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
 
+it('selects an existing chat instead of adding it twice', async () => {
+  const fetchMock = vi.fn().mockResolvedValue(accountSuccess())
+  await openChat(fetchMock)
+
+  openDialog()
+  fireEvent.change(screen.getByRole('textbox', { name: 'Номер получателя' }), {
+    target: { value: '+7 (999) 123-45-67' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: 'Открыть чат' }))
+
+  await screen.findByRole('heading', { name: '+7 (999) 123-45-67' })
+  expect(screen.getAllByRole('button', { name: /\+7 \(999\) 123-45-67/ })).toHaveLength(1)
+  expect(JSON.parse(sessionStorage.getItem('green-api-chat-session')!).chats).toHaveLength(1)
+})
+
 it('keeps the dialog open when a number has no MAX account', async () => {
   const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ existsWhatsapp: false, chatId: '' }), { status: 200 }))
   vi.stubGlobal('fetch', fetchMock)
