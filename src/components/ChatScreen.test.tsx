@@ -129,7 +129,7 @@ it('keeps the dialog open when a number has no MAX account', async () => {
   fireEvent.change(screen.getByRole('textbox', { name: 'Номер получателя' }), { target: { value: '+7 999 123 45 67' } })
   fireEvent.click(screen.getByRole('button', { name: 'Открыть чат' }))
 
-  expect(await screen.findByText('Этот номер не зарегистрирован в WhatsApp. Проверьте номер и попробуйте снова.')).toBeInTheDocument()
+  expect(await screen.findByText('Этот номер не зарегистрирован в MAX. Проверьте номер и попробуйте снова.')).toBeInTheDocument()
   expect(screen.getByRole('dialog')).toBeInTheDocument()
 })
 
