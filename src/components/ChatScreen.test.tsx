@@ -48,6 +48,13 @@ it('renders a theme toggle in the sidebar', async () => {
   expect(screen.getByRole('button', { name: 'Переключить тему' })).toBeInTheDocument()
 })
 
+it('uses an icon send button with an accessible name', async () => {
+  await openChat(vi.fn().mockResolvedValue(accountSuccess()))
+  const send = screen.getByRole('button', { name: 'Отправить' })
+  expect(send).toHaveClass('icon-button')
+  expect(send.querySelector('svg')).not.toBeNull()
+})
+
 it('shows the outgoing timestamp and delivery icon', async () => {
   const fetchMock = vi.fn((url: string) => {
     if (url.includes('/checkWhatsapp/')) return Promise.resolve(accountSuccess())
